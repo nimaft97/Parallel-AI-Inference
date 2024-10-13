@@ -21,7 +21,10 @@ find_package(CUDA)
 include_directories(src/core src/gpu src/bindings)
 
 # Add core C++ files
-add_executable(model_inference src/main.cpp src/core/ModelParser.cpp src/core/InferenceEngine.cpp src/core/OutputProcessor.cpp src/bindings/bindings.cpp)
+add_executable(model_inference src/main.cpp 
+              src/core/ModelParser.cpp src/core/InferenceEngine.cpp src/core/OutputProcessor.cpp 
+              src/core/NNTensor.cpp src/core/NNModel.cpp src/core/NNLayer.cpp src/core/NNActivation.cpp
+              src/bindings/bindings.cpp)
 
 # Link OpenCL to the project
 target_link_libraries(model_inference OpenCL::OpenCL)
