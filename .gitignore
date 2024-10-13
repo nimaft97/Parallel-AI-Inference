@@ -1,0 +1,47 @@
+# Compiled object files and libraries
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+
+# Executable files
+*.exe
+*.out
+*.app
+
+# CMake and build directories
+CMakeLists.txt.user
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+/build/
+build/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+*.eggs/
+*.venv/
+
+# Jupyter notebooks (optional, in case you use them)
+.ipynb_checkpoints
+
+# Model and large files (add file-specific patterns here if needed)
+*.pth
+*.h5
+
+# VSCode settings (optional, if you're using it)
+.vscode/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+
+# DS_Store (macOS specific)
+.DS_Store
+
