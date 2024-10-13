@@ -3,8 +3,9 @@
 
 class NNTensor
 {
+public:
     NNTensor();
     ~NNTensor();
-}
+};
 
 #endif
