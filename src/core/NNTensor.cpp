@@ -1,6 +1,7 @@
 #include "NNTensor.h"
 
 #include <numeric>
+#include <algorithm>
 
 NNTensor::NNTensor(const dimVec& dimensions): m_dimensions(dimensions)
 {
@@ -43,6 +44,16 @@ const float& NNTensor::operator()(const dimVec& indices) const
     return m_data[idx];
 }
 
+float& NNTensor::operator()(const dimType& flattened_index)
+{
+    return m_data[flattened_index];
+}
+
+const float& NNTensor::operator()(const dimType& flattened_index) const
+{
+    return m_data[flattened_index];
+}
+
 dimVec NNTensor::getDimensions() const
 {
     return m_dimensions;
@@ -51,4 +62,9 @@ dimVec NNTensor::getDimensions() const
 dimType NNTensor::getSize() const
 {
     return m_size;
+}
+
+float NNTensor::getMax() const
+{
+    return *std::max_element(m_data.data(), m_data.data()+m_size);
 }

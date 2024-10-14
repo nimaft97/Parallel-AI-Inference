@@ -15,9 +15,12 @@ public:
 
     dimVec getDimensions() const;
     dimType getSize() const;
+    float getMax() const;
 
     float& operator()(const dimVec& indices);
     const float& operator()(const dimVec& indices) const;
+    float& operator()(const dimType& flattened_index);
+    const float& operator()(const dimType& flattened_index) const;
 
 private:
     std::vector<float> m_data;
