@@ -23,7 +23,8 @@ include_directories(src/core src/gpu src/bindings)
 # Add core C++ files
 add_executable(model_inference src/main.cpp 
               src/core/ModelParser.cpp src/core/InferenceEngine.cpp src/core/OutputProcessor.cpp 
-              src/core/nn/tensor/NNTensor.cpp src/core/nn/model/NNModel.cpp src/core/nn/layer/NNLayer.cpp src/core/nn/activation/NNActivation.cpp
+              src/core/nn/tensor/NNTensor.cpp src/core/nn/model/NNModel.cpp src/core/nn/activation/NNActivation.cpp
+              src/core/nn/layer/NNLayer.cpp src/core/nn/layer/NNDense.cpp src/core/nn/layer/NNConv2D.cpp
               src/bindings/bindings.cpp)
 
 # Link OpenCL to the project
