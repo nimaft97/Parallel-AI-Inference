@@ -1,23 +1,23 @@
-#include "NNModel.h"
+#include "Model.h"
 
 #include <iostream>
 
-NNModel::NNModel()
+Model::Model()
 {
 }
 
-NNModel::~NNModel()
+Model::~Model()
 {
 }
 
-void NNModel::loadModel(const std::string& file_path)
+void Model::loadModel(const std::string& file_path)
 {
     std::cout << "Loading model from: " << file_path << std::endl;
 }
 
-NNTensor NNModel::runInference(const NNTensor& input) const
+Tensor Model::runInference(const Tensor& input) const
 {
-    NNTensor output = NNTensor(input);
+    Tensor output = Tensor(input);
 
     for (const auto& layer : m_layers)
     {

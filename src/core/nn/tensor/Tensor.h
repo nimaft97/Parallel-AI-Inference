@@ -1,17 +1,17 @@
-#ifndef NNTENSOR_H
-#define NNTENSOR_H
+#ifndef TENSOR_H
+#define TENSOR_H
 
 #include <vector>
 
 typedef unsigned int dimType;
 typedef std::vector<dimType> dimVec;
 
-class NNTensor
+class Tensor
 {
 public:
-    NNTensor(const dimVec& dimensions);
-    NNTensor(const NNTensor& other);
-    ~NNTensor();
+    Tensor(const dimVec& dimensions);
+    Tensor(const Tensor& other);
+    ~Tensor();
 
     dimVec getDimensions() const;
     dimType getSize() const;

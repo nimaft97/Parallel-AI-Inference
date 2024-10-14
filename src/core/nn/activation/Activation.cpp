@@ -1,22 +1,22 @@
-#include "NNActivation.h"
+#include "Activation.h"
 
 #include <cmath>
 
-NNTensor NNActivation::relu(const NNTensor& input)
+Tensor Activation::relu(const Tensor& input)
 {
-    NNTensor output = NNTensor(input.getDimensions());
+    Tensor output = Tensor(input.getDimensions());
     const auto total_size = input.getSize();
     for (auto flattened_idx = 0u; flattened_idx < total_size; ++flattened_idx)
     {
-        const auto in_val = input(flattened_idx);  // read the ith element from m_data of NNTensor
+        const auto in_val = input(flattened_idx);  // read the ith element from m_data of Tensor
         output(flattened_idx) = std::max(0.0f, in_val); 
     }
     return output;
 }
 
-NNTensor NNActivation::softmax(const NNTensor& input)
+Tensor Activation::softmax(const Tensor& input)
 {
-    NNTensor output = NNTensor(input.getDimensions());
+    Tensor output = Tensor(input.getDimensions());
     const auto max_in_val = input.getMax();
     const auto total_size = input.getSize();
 
