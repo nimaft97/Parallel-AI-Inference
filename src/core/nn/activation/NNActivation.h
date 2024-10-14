@@ -1,7 +1,7 @@
 #ifndef NNACTIVATION_H
 #define NNACTIVATION_H
 
-#include "NNTensor.h"
+#include "../tensor/NNTensor.h"
 
 class NNActivation
 {

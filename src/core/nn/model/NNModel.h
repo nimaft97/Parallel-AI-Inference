@@ -1,8 +1,8 @@
 #ifndef NNMODEL_H
 #define NNMODEL_H
 
-#include "NNTensor.h"
-#include "NNLayer.h"
+#include "../tensor/NNTensor.h"
+#include "../layer/NNLayer.h"
 
 #include <vector>
 #include <string>

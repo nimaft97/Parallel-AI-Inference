@@ -1,7 +1,7 @@
 #ifndef NNLAYER_H
 #define NNLAYER_H
 
-#include "NNTensor.h"
+#include "../tensor/NNTensor.h"
 
 class NNLayer
 {
