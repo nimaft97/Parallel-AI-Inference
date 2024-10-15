@@ -22,7 +22,7 @@ public:
     float& operator()(const dimType& flattened_index);
     const float& operator()(const dimType& flattened_index) const;
 
-private:
+protected:
     std::vector<float> m_data;
     dimVec m_dimensions;
     dimType m_size;
