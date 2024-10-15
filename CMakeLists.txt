@@ -23,7 +23,8 @@ include_directories(src/core src/gpu src/bindings)
 # Add core C++ files
 add_executable(model_inference src/main.cpp 
               src/core/ModelParser.cpp src/core/InferenceEngine.cpp src/core/OutputProcessor.cpp 
-              src/core/nn/tensor/Tensor.cpp src/core/nn/model/Model.cpp src/core/nn/activation/Activation.cpp
+              src/core/nn/tensor/Tensor.cpp src/core/nn/tensor/TensorGpuOpenCL.cpp
+              src/core/nn/model/Model.cpp src/core/nn/activation/Activation.cpp
               src/core/nn/layer/Layer.cpp src/core/nn/layer/Dense.cpp src/core/nn/layer/Conv2D.cpp
               src/bindings/bindings.cpp)
 
