@@ -21,6 +21,7 @@ public:
     const float& operator()(const dimVec& indices) const;
     float& operator()(const dimType& flattened_index);
     const float& operator()(const dimType& flattened_index) const;
+    Tensor operator*(const Tensor& other) const;
 
 protected:
     std::vector<float> m_data;

@@ -22,27 +22,45 @@ Tensor::~Tensor()
 
 float& Tensor::operator()(const dimVec& indices)
 {
+    // Start with 0 index.
     dimType idx = 0;
-    for (auto i = 0; i <= indices.size(); ++i)
+    
+    // Calculate the flattened index from multi-dimensional indices.
+    for (dimType i = 0; i < indices.size(); ++i)
     {
-        idx *= m_dimensions[i];
-        idx += indices[i];
+        // Add the current index, scaled by the product of the subsequent dimensions.
+        dimType scale = 1;
+        for (dimType j = i + 1; j < m_dimensions.size(); ++j)
+        {
+            scale *= m_dimensions[j];
+        }
+        idx += indices[i] * scale;
     }
 
     return m_data[idx];
 }
+
 
 const float& Tensor::operator()(const dimVec& indices) const
 {
+    // Start with 0 index.
     dimType idx = 0;
-    for (auto i = 0; i <= indices.size(); ++i)
+    
+    // Calculate the flattened index from multi-dimensional indices.
+    for (dimType i = 0; i < indices.size(); ++i)
     {
-        idx *= m_dimensions[i];
-        idx += indices[i];
+        // Add the current index, scaled by the product of the subsequent dimensions.
+        dimType scale = 1;
+        for (dimType j = i + 1; j < m_dimensions.size(); ++j)
+        {
+            scale *= m_dimensions[j];
+        }
+        idx += indices[i] * scale;
     }
 
     return m_data[idx];
 }
+
 
 float& Tensor::operator()(const dimType& flattened_index)
 {
@@ -67,4 +85,34 @@ dimType Tensor::getSize() const
 float Tensor::getMax() const
 {
     return *std::max_element(m_data.data(), m_data.data()+m_size);
+}
+
+Tensor Tensor::operator*(const Tensor& other) const
+{
+    const auto other_dims = other.getDimensions();
+    if (other_dims.size() != 2 || m_dimensions.size() != 2)
+    {
+        throw std::invalid_argument("Only matrices can be multiplied");
+    }
+
+    if (other_dims[0] != m_dimensions[1])
+    {
+        throw std::invalid_argument("Matrix dimensions don't match the requested multiplication");
+    }
+
+    Tensor result = Tensor({m_dimensions[0], other_dims[1]});
+    for (auto i = 0u; i < m_dimensions[0]; ++i)
+    {
+        for (auto j = 0u; j < other_dims[1]; ++j)
+        {
+            auto sum = 0.0f;
+            for (auto k = 0u; k < m_dimensions[1]; ++k)
+            {
+                sum += (*this)({i, k}) * other({k, j});
+            }
+            result({i, j}) = sum;
+        }
+    }
+
+    return result;
 }

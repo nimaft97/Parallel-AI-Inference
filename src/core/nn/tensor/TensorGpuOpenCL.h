@@ -11,8 +11,7 @@ class TensorGpuOpenCL : public Tensor
 public:
     TensorGpuOpenCL(const dimVec& dimensions);
     ~TensorGpuOpenCL();
-
-    Tensor operator*(const TensorGpuOpenCL& other) const;
+    
     TensorGpuOpenCL multiplyOnGpu(const TensorGpuOpenCL& other) const;
 
 protected:
