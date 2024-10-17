@@ -13,15 +13,16 @@ public:
     Tensor(const Tensor& other);
     ~Tensor();
 
-    dimVec getDimensions() const;
-    dimType getSize() const;
-    float getMax() const;
+    virtual dimVec getDimensions() const;
+    virtual dimType getSize() const;
+    virtual float getMax() const;
+    virtual void setData(const std::vector<float>& data);
 
-    float& operator()(const dimVec& indices);
-    const float& operator()(const dimVec& indices) const;
-    float& operator()(const dimType& flattened_index);
-    const float& operator()(const dimType& flattened_index) const;
-    Tensor operator*(const Tensor& other) const;
+    virtual float& operator()(const dimVec& indices);
+    virtual const float& operator()(const dimVec& indices) const;
+    virtual float& operator()(const dimType& flattened_index);
+    virtual const float& operator()(const dimType& flattened_index) const;
+    virtual Tensor operator*(const Tensor& other) const;
 
 protected:
     std::vector<float> m_data;

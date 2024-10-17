@@ -116,3 +116,13 @@ Tensor Tensor::operator*(const Tensor& other) const
 
     return result;
 }
+
+void Tensor::setData(const std::vector<float>& data)
+{
+    if (data.size() != getSize())
+    {
+        throw std::runtime_error("Invalid data size");
+    }
+
+    m_data = data;
+}
