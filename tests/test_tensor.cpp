@@ -1,7 +1,24 @@
 #include "nn/tensor/TensorGpuOpenCL.h"
 
 #include <catch2/catch_all.hpp>
+#include <vector>
+#include <numeric>
 
+
+TEST_CASE("Tensor indexing works fine", "[Tensor]")
+{
+
+    std::vector<float> data(2 * 3 * 4);
+    std::iota(data.begin(), data.end(), 0.0);
+
+    Tensor t1 = Tensor({2, 3, 4});
+    t1.setData(data);
+
+    REQUIRE(t1({0, 0, 0}) == Catch::Approx(0.0));
+    REQUIRE(t1({0, 2, 3}) == Catch::Approx(11.0));
+    REQUIRE(t1({1, 1, 1}) == Catch::Approx(17.0));
+    REQUIRE(t1({1, 1, 2}) == Catch::Approx(18.0));
+}
 
 TEST_CASE("Matrix multiplication on GPU works correctly", "[TensorGpuOpenCL]")
 {
