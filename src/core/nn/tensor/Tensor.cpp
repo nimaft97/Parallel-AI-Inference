@@ -2,6 +2,7 @@
 
 #include <numeric>
 #include <algorithm>
+#include <stdexcept>
 
 Tensor::Tensor(const dimVec& dimensions): m_dimensions(dimensions)
 {

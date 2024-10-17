@@ -3,7 +3,7 @@
 
 #include "Tensor.h"
 
-#include <CL/cl.hpp>
+#include <CL/cl.h>
 #include <string>
 
 class TensorGpuOpenCL : public Tensor

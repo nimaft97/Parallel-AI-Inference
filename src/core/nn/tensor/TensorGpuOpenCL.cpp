@@ -1,9 +1,9 @@
 #include "TensorGpuOpenCL.h"
 
-#include <stdexcept>
 #include <iostream>
 #include <fstream>
 #include <streambuf>
+#include <sstream>
 
 TensorGpuOpenCL::TensorGpuOpenCL(const dimVec& dimensions): Tensor(dimensions)
 {
@@ -13,10 +13,28 @@ TensorGpuOpenCL::TensorGpuOpenCL(const dimVec& dimensions): Tensor(dimensions)
         throw std::invalid_argument("TensorGpuOpenCL only supports Matrix");
     }
 
-    cl_platform_id platform;
-    clGetPlatformIDs(1, &platform, nullptr);
-    clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &m_cl_device, nullptr);
-    m_cl_context = clCreateContext(nullptr, 1, &m_cl_device, nullptr, nullptr, nullptr);
+    cl_int err = CL_SUCCESS;
+
+    cl_platform_id platform_id;
+    err = clGetPlatformIDs(1, &platform_id, nullptr);
+    if (err != CL_SUCCESS)
+    {
+        throw std::runtime_error("Couldn't get the platform");
+    }
+    // set the device
+    err = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_GPU, 1, &m_cl_device, nullptr);
+    if (err == CL_SUCCESS)
+    {
+        // at least one OpenCL capable GPU exists
+        std::cout << "GPU found" << std::endl;
+    }
+    else
+    {
+        // default to CPU
+        clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_CPU, 1, &m_cl_device, nullptr);
+        std::cout << "No GPU found, switched back to CPU" << std::endl;
+    }
+    m_cl_context = clCreateContext(nullptr, 1, &m_cl_device, nullptr, nullptr, &err);
     m_cl_queue = clCreateCommandQueue(m_cl_context, m_cl_device, 0, nullptr);
 }
 
