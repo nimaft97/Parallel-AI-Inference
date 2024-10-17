@@ -1,5 +1,4 @@
-__kernel void matMul(__global float* lBuffer, __global *rBuffer, __global resultBuffer,
+__kernel void matMul(__global float* lBuffer, __global float* rBuffer, __global float* resultBuffer,
                      const unsigned int lDim_0, const unsigned int lDim_1, const unsigned int rDim_1)
 {
-    
 }
