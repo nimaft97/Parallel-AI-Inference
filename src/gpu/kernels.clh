@@ -42,4 +42,69 @@ __kernel void gemm(__global float* lBuffer, __global float* rBuffer, __global fl
     const uint2 thread_l_idx  =    {get_local_id(0), get_local_id(1)};
     const uint2 group_idx     =    {get_group_id(0), get_group_id(1)};
     const uint2 group_nums    =    {get_num_groups(0), get_num_groups(1)};
+
+    // shared memory to load tiles from the left and right buffer
+    __local float left_tile[GEMM_TILE_DIM][GEMM_TILE_DIM];
+    __local float right_tile[GEMM_TILE_DIM][GEMM_TILE_DIM];
+    
+
+    if (thread_l_idx.x >= GEMM_TILE_DIM || thread_l_idx.y >= GEMM_TILE_DIM)
+    {
+        return;
+    }
+
+    uint left_buff_col = group_idx.x * GEMM_TILE_DIM; 
+    uint left_buff_row = group_idx.y * GEMM_TILE_DIM;
+    uint right_buff_col = group_idx.x * GEMM_TILE_DIM; 
+    uint right_buff_row = group_idx.y * GEMM_TILE_DIM;
+
+    for (; left_buff_col < lDim_1; left_buff_col += group_nums.x * GEMM_TILE_DIM)
+    {
+        for (; left_buff_row < lDim_0; left_buff_row += group_nums.y * GEMM_TILE_DIM)
+        {
+            // now we know which row/col to start reading from the left buffer
+            // load global data into the left tile
+            for (uint i = thread_l_idx.y; i < GEMM_TILE_DIM; i += local_size.y)
+            {
+                for (uint j = thread_l_idx.x; j < GEMM_TILE_DIM; j += local_size.x)
+                {
+                    // check if indices of the element that's being read are within the range
+                    if (left_buff_col + j >= lDim_1 || left_buff_row + i >= lDim_0)
+                    {
+                        left_tile[i][j] = 0.0f;
+                    }
+                    else
+                    {
+                        left_tile[i][j] = lBuffer[left_buff_row * lDim_1 + left_buff_col];
+                    }
+                }
+            }
+            // take care of the right tile
+            for (; right_buff_col < rDim_1; right_buff_col += group_nums.x * GEMM_TILE_DIM)
+            {
+                for (; right_buff_row < lDim_1; right_buff_row += group_nums.y * GEMM_TILE_DIM)
+                {
+                    // now we know which row/col to start reading from the right buffer
+                    // load global data into the right tile
+                    for (uint i = thread_l_idx.y; i < GEMM_TILE_DIM; i += local_size.y)
+                    {
+                        for (uint j = thread_l_idx.x; j < GEMM_TILE_DIM; j += local_size.x)
+                        {
+                            // check if indices of the element that's being read are within the range
+                            if (right_buff_col + j >= rDim_1 || right_buff_row + i >= lDim_1)
+                            {
+                                right_tile[i][j] = 0.0f;
+                            }
+                            else
+                            {
+                                right_tile[i][j] = rBuffer[right_buff_row * rDim_1 + right_buff_col];
+                            }
+                        }
+                    }
+                    barrier(CLK_LOCAL_MEM_FENCE);  // sync
+                    // at this point, both left and right tiles are populated
+                }
+            }
+        }
+    }
 }
