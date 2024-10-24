@@ -70,13 +70,15 @@ __kernel void gemm(__global float* lBuffer, __global float* rBuffer, __global fl
                     for (uint j = thread_l_idx.x; j < GEMM_TILE_DIM; j += local_size.x)
                     {
                         // check if indices of the element that's being read are within the range
-                        if (left_buff_col + j >= lDim_1 || left_buff_row + i >= lDim_0)
+                        const uint tmp_row = left_buff_row + i;
+                        const tmp_col = left_buff_col + j;
+                        if (tmp_col >= lDim_1 || tmp_row >= lDim_0)
                         {
                             left_tile[i][j] = 0.0f;
                         }
                         else
                         {
-                            left_tile[i][j] = lBuffer[left_buff_row * lDim_1 + left_buff_col];
+                            left_tile[i][j] = lBuffer[tmp_row * lDim_1 + tmp_col];
                         }
                     }
                 }
@@ -90,19 +92,40 @@ __kernel void gemm(__global float* lBuffer, __global float* rBuffer, __global fl
                         for (uint j = thread_l_idx.x; j < GEMM_TILE_DIM; j += local_size.x)
                         {
                             // check if indices of the element that's being read are within the range
-                            if (right_buff_col + j >= rDim_1 || right_buff_row + i >= lDim_1)
+                            const uint tmp_row = right_buff_row + i;
+                            const uint tmp_col = right_buff_col + j;
+                            if (tmp_col >= rDim_1 || tmp_row >= lDim_1)
                             {
                                 right_tile[i][j] = 0.0f;
                             }
                             else
                             {
-                                right_tile[i][j] = rBuffer[right_buff_row * rDim_1 + right_buff_col];
+                                right_tile[i][j] = rBuffer[tmp_row * rDim_1 + tmp_col];
                             }
                         }
                     }
 
                     barrier(CLK_LOCAL_MEM_FENCE);  // sync
                     // at this point, both tiles are populated and threads are synchronized
+                    // do the multiplication
+                    for (uint i = thread_l_idx.y; i < GEMM_TILE_DIM; i += local_size.y)
+                    {
+                        for (uint j = thread_l_idx.x; j < GEMM_TILE_DIM; j += local_size.x)
+                        {
+                            float sum = 0.0f;
+                            for (uint k = 0u; k < GEMM_TILE_DIM; ++k)
+                            {
+                                sum += left_tile[i][k] * right_tile[k][j];
+                            }
+                            const uint result_buff_row = left_buff_row + i; 
+                            const uint result_buff_col = right_buff_col + j;
+                            if (result_buff_row < lDim_0 && result_buff_col < lDim_1)
+                            {
+                                resultBuffer[result_buff_row * rDim_1 + result_buff_col] += sum; 
+                            }
+                        }
+                    }
+                    barrier(CLK_LOCAL_MEM_FENCE);  // sync
                 }
             }
         }
