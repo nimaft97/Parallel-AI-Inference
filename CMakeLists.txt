@@ -10,6 +10,21 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Define the common source files - keep updated
+set(COMMON_SOURCES
+    src/core/ModelParser.cpp
+    src/core/InferenceEngine.cpp
+    src/core/OutputProcessor.cpp
+    src/core/nn/tensor/Tensor.cpp
+    src/core/nn/tensor/TensorGpuOpenCL.cpp
+    src/core/nn/model/Model.cpp
+    src/core/nn/activation/Activation.cpp
+    src/core/nn/layer/Layer.cpp
+    src/core/nn/layer/Dense.cpp
+    src/core/nn/layer/Conv2D.cpp
+    src/bindings/bindings.cpp
+)
+
 # Find OpenCL (cross-platform)
 find_package(OpenCL REQUIRED)
 
@@ -21,7 +36,7 @@ find_package(CUDA)
 include_directories(src/core src/gpu src/bindings)
 
 # Add core C++ files
-add_executable(model_inference src/main.cpp src/core/ModelParser.cpp src/core/InferenceEngine.cpp src/core/OutputProcessor.cpp src/bindings/bindings.cpp)
+add_executable(model_inference src/main.cpp ${COMMON_SOURCES})
 
 # Link OpenCL to the project
 target_link_libraries(model_inference OpenCL::OpenCL)
@@ -56,13 +71,18 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(catch)
 
 # Add unit tests
-add_executable(tests tests/test_model_loader.cpp)
-target_link_libraries(tests PRIVATE Catch2::Catch2)
-target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
+add_executable(tests_app tests/test_tensor.cpp ${COMMON_SOURCES})
+
+target_link_libraries(tests_app PRIVATE Catch2::Catch2)
+target_link_libraries(tests_app PRIVATE Catch2::Catch2WithMain)
+
+# Link OpenCL to the project
+target_link_libraries(tests_app PRIVATE OpenCL::OpenCL)
+target_compile_definitions(tests_app PRIVATE CL_TARGET_OPENCL_VERSION=100)
 
 # Add a custom target for running tests
 add_custom_target(run_tests
-    COMMAND tests
-    DEPENDS tests
+    COMMAND tests_app
+    DEPENDS tests_app
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
