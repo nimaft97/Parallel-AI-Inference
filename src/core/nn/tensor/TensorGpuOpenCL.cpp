@@ -91,7 +91,7 @@ TensorGpuOpenCL TensorGpuOpenCL::multiplyOnGpu(const TensorGpuOpenCL& other) con
     {
         throw std::invalid_argument("Matrix dimensions don't match the requested multiplication");
     }
-    cl_kernel kernel = loadKernel("../src/gpu/kernels.clh", "matMul");
+    cl_kernel kernel = loadKernel("../src/gpu/kernels.clh", "gemm");
     
     TensorGpuOpenCL result = TensorGpuOpenCL({m_dimensions[0], other_dims[1]});
     
