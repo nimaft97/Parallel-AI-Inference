@@ -1,5 +1,7 @@
+#define GEMM_TILE_DIM 16
+
 __kernel void matMul(__global float* lBuffer, __global float* rBuffer, __global float* resultBuffer,
-                     const unsigned int lDim_0, const unsigned int lDim_1, const unsigned int rDim_1)
+                     const uint lDim_0, const uint lDim_1, const uint rDim_1)
 {
     // local size equals global size
     const uint2 global_size = {get_global_size(0), get_global_size(1)};
@@ -26,4 +28,18 @@ __kernel void matMul(__global float* lBuffer, __global float* rBuffer, __global 
             resultBuffer[resIdx] = sum;
         }    
     }
+}
+
+/*
+* @note  gemm stands for GEneral Matrix Multiplication
+*/
+__kernel void gemm(__global float* lBuffer, __global float* rBuffer, __global float* resultBuffer,
+                     const uint lDim_0, const uint lDim_1, const uint rDim_1)
+{
+    const uint2 global_size   =    {get_global_size(0), get_global_size(1)};
+    const uint2 local_size    =    {get_local_size(0), get_local_size(1)};
+    const uint2 thread_g_idx  =    {get_global_id(0), get_global_id(1)};
+    const uint2 thread_l_idx  =    {get_local_id(0), get_local_id(1)};
+    const uint2 group_idx     =    {get_group_id(0), get_group_id(1)};
+    const uint2 group_nums    =    {get_num_groups(0), get_num_groups(1)};
 }
