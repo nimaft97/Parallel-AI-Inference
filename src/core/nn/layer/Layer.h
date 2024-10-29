@@ -5,10 +5,6 @@
 
 class Layer
 {
-public:
-    Layer();
-    virtual ~Layer() = default;
-    virtual Tensor forward(const Tensor& input) const = 0;
 };
 
 #endif

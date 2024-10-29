@@ -12,11 +12,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Define the common source files - keep updated
 set(COMMON_SOURCES
-    src/core/ModelParser.cpp
-    src/core/InferenceEngine.cpp
-    src/core/OutputProcessor.cpp
-    src/core/nn/tensor/Tensor.cpp
-    src/core/nn/tensor/TensorGpuOpenCL.cpp
     src/core/nn/model/Model.cpp
     src/core/nn/activation/Activation.cpp
     src/core/nn/layer/Layer.cpp
