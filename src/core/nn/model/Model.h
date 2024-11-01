@@ -11,12 +11,6 @@
 class Model
 {
 public:
-    Model();
-    ~Model();
-    void loadModel(const std::string& file_path);
-    Tensor runInference(const Tensor& input) const;
-
-
 protected:
     std::vector<std::unique_ptr<Layer>> m_layers;
 };
