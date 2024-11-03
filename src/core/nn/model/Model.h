@@ -3,6 +3,7 @@
 
 #include "../tensor/Tensor.h"
 #include "../layer/Layer.h"
+#include "../common.h"
 
 #include <vector>
 #include <string>
@@ -11,8 +12,11 @@
 class Model
 {
 public:
+    Model();
+    virtual void add_layer(const Layer* p_layer);
+    virtual Tensor<float> execute(const Tensor<float>& input);
 protected:
-    std::vector<std::unique_ptr<Layer>> m_layers;
+    std::vector<const Layer*> m_layers;
 };
 
 #endif
