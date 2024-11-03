@@ -3,17 +3,27 @@
 Tensor<float> Dense::forward(const Tensor<float>& input) const
 {
     // do something
-    return Tensor<float>();
+    return input * m_weight + m_bias;
 }
 
-void Dense::load_to_device()
+// void Dense::to_device()
+// {
+//     // m_weight.load_to_device();
+//     // m_bias.load_to_device();
+// }
+
+// void Dense::to_host()
+// {
+//     // m_weight.load_to_host();
+//     // m_bias.load_to_host();
+// }
+
+void Dense::set_weight(const Tensor<float>& weight)
 {
-    // m_weight.load_to_device();
-    // m_bias.load_to_device();
+    m_weight = weight;
 }
 
-void Dense::load_to_host()
+void Dense::set_bias(const Tensor<float>& bias)
 {
-    // m_weight.load_to_host();
-    // m_bias.load_to_host();
+    m_bias = bias;
 }
