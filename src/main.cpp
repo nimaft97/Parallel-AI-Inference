@@ -2,11 +2,57 @@
 #include "nn/model/Model.h"
 #include "nn/layer/Dense.h"
 
+#include <CL/cl.h>
 #include <iostream>
+#include <cassert>
+
+#define CHECK_CL_ERROR(err, msg) assert(err == CL_SUCCESS && msg)
 
 int main(int argc, char** argv)
 {
     std::cout << "Welcome to the Parallel AI Inference project" << std::endl;
+
+    // initialize OpenCL
+    cl_int err = CL_SUCCESS;
+    cl_platform_id platform_id;
+    cl_device_id device;
+    cl_context context;
+    cl_program program;
+    cl_command_queue queue;
+
+    err = clGetPlatformIDs(1, &platform_id, NULL); 
+    CHECK_CL_ERROR(err, "Couldn't get platform");
+
+    // set the device
+    err = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
+    if (err == CL_SUCCESS)
+    {
+        // at least one OpenCL capable GPU exists
+        std::cout << "GPU found" << std::endl;
+    }
+    else
+    {
+        // default to CPU
+        clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_CPU, 1, &device, NULL);
+        std::cout << "No GPU found, switched back to CPU" << std::endl;
+    }
+    
+    context = clCreateContext(NULL, 1, &device, NULL, NULL, &err);
+    CHECK_CL_ERROR(err, "Couldn't create the context");
+    queue = clCreateCommandQueue(context, device, NULL, &err);
+    CHECK_CL_ERROR(err, "Couldn't create the queue");
+
+    // create a program from kernel source code
+    const auto file_name = "../src/gpu/kernels.clh";
+    const auto kernel_source_string = read_file(file_name);
+    const char* kernel_source = kernel_source_string.c_str();
+    program = clCreateProgramWithSource(context, 1, &kernel_source, NULL, &err);
+    CHECK_CL_ERROR(err, "Couldn't create the program");
+    // build the program
+    err = clBuildProgram(program, 1, &device, NULL, NULL, NULL);
+    CHECK_CL_ERROR(err, "Couldn't build the program");
+
+    
 
     auto input = Tensor<float>();
     input.set_host_data({1.0f, 2.0f, 3.0f});
