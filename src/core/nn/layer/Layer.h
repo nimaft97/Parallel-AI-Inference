@@ -2,7 +2,6 @@
 #define LAYER_H
 
 #include "../tensor/Tensor.h"
-#include "../common.h"
 
 class Layer
 {
