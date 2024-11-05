@@ -1,20 +1,14 @@
 #ifndef TENSOR_H
 #define TENSOR_H
 
+#include "../common.h"
+
 #include <vector>
 #include <iostream>
 #include <string>
 #include <sstream>
 #include <numeric>
 #include <algorithm>
-
-enum PLATFORM
-{
-    UNKNOWN = 0,
-    HOST,
-    DEVICE
-
-};
 
 template<typename DATA_T>
 class Tensor
