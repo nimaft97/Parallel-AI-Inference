@@ -59,8 +59,9 @@ void TensorOpenCL<DATA_T>::release_device_data()
 template<typename DATA_T>
 void TensorOpenCL<DATA_T>::load_to_host()
 {
-    // todo: override in GPU-level derived classes
-    
+    const auto size_in_byte = m_host_data.size() * sizeof(DATA_T);
+    m_err = clEnqueueReadBuffer(m_queue, m_device_data, CL_TRUE, 0, size_in_byte, m_host_data.data(), 0, NULL, NULL);
+    CHECK_CL_ERROR(m_err, "Couldn't write device data back to host");
 }
 
 // this function re-allocates a gpu buffer
