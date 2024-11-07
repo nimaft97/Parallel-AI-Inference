@@ -46,8 +46,8 @@ public:
 
     virtual void set_host_data(const std::vector<DATA_T>& h_data);
     virtual void set_dims(const std::vector<size_t>& dims);
-    // virtual void load_to_device() = 0;
-    // virtual void load_to_host() = 0;
+    virtual void load_to_device();
+    virtual void load_to_host();
 
     virtual Tensor<DATA_T> operator+(const Tensor<DATA_T>& other) const;
     virtual Tensor<DATA_T> operator*(const Tensor<DATA_T>& other) const;
@@ -56,8 +56,8 @@ public:
 protected:
     virtual void add_on_host(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const;
     virtual void multiply_on_host(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const;
-    // virtual void add_on_device(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const = 0;
-    // virtual void multiply_on_device(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const = 0;
+    virtual void add_on_device(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const;
+    virtual void multiply_on_device(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const;
 private:
     size_t calculate_index(const std::vector<size_t>& indices) const;
     template<typename... Args>
@@ -323,6 +323,30 @@ size_t Tensor<DATA_T>::calculate_index(const std::vector<size_t>& indices) const
         idx += indices[i] * scale;
     }
     return idx;
+}
+
+template<typename DATA_T>
+void Tensor<DATA_T>::load_to_host()
+{
+    // todo: override in GPU-level derived classes
+}
+
+template<typename DATA_T>
+void Tensor<DATA_T>::load_to_device()
+{
+    // todo: override in GPU-level derived classes
+}
+
+template<typename DATA_T>
+void Tensor<DATA_T>::add_on_device(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const
+{
+    // todo: override in GPU-level derived classes
+}
+
+template<typename DATA_T>
+void Tensor<DATA_T>::multiply_on_device(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const
+{
+    // todo: override in GPU-level derived classes
 }
 
 #endif  // TENSOR_H
