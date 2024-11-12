@@ -9,6 +9,7 @@
 #include <sstream>
 #include <numeric>
 #include <algorithm>
+#include <memory>
 
 template<typename DATA_T>
 class Tensor
@@ -16,6 +17,7 @@ class Tensor
 public:
     Tensor(const Tensor<DATA_T>& other);
     Tensor();
+    virtual ~Tensor() = default;
 
     virtual PLATFORM get_platform() const;
     virtual size_t get_size() const;
@@ -51,6 +53,7 @@ public:
 
     virtual Tensor<DATA_T> operator+(const Tensor<DATA_T>& other) const;
     virtual Tensor<DATA_T> operator*(const Tensor<DATA_T>& other) const;
+    virtual Tensor<DATA_T> operator=(const Tensor<DATA_T>& other) const;
 
     virtual std::string to_string(bool platform=true, bool dim=true, bool total_size=true, bool data=false) const;
 protected:
@@ -58,6 +61,7 @@ protected:
     virtual void multiply_on_host(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const;
     virtual void add_on_device(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const;
     virtual void multiply_on_device(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const;
+    virtual std::unique_ptr<Tensor<DATA_T>> clone() const;
 private:
     size_t calculate_index(const std::vector<size_t>& indices) const;
     template<typename... Args>
@@ -68,9 +72,9 @@ private:
 
 public:
 protected:
-    std::vector<DATA_T> m_host_data;                    // vector on the host side
-    std::vector<size_t> m_dims;                         // number of dimensions
-    size_t              m_size;                         // number of elements
+    std::vector<DATA_T> m_host_data;                        // vector on the host side
+    std::vector<size_t> m_dims;                             // number of dimensions
+    size_t              m_size;                             // number of elements
     PLATFORM            m_platform = PLATFORM::UNKNOWN;     // which device data is laoded to
 private:
 };
@@ -87,6 +91,12 @@ Tensor<DATA_T>::Tensor(const Tensor<DATA_T>& other)
     m_dims      = other.m_dims;
     m_size      = other.m_size;
     m_platform  = other.m_platform;
+}
+
+template<typename DATA_T>
+std::unique_ptr<Tensor<DATA_T>> Tensor<DATA_T>::clone() const
+{
+    return std::make_unique<Tensor<DATA_T>>(Tensor<DATA_T>(*this));
 }
 
 template<typename DATA_T>
@@ -131,6 +141,12 @@ void Tensor<DATA_T>::set_host_data(const std::vector<DATA_T>& flattened_data)
 }
 
 template<typename DATA_T>
+Tensor<DATA_T> Tensor<DATA_T>::operator=(const Tensor<DATA_T>& other) const
+{
+    return *clone();
+}
+
+template<typename DATA_T>
 Tensor<DATA_T> Tensor<DATA_T>::operator+(const Tensor<DATA_T>& other) const
 {
     const auto this_device = get_platform();
@@ -141,21 +157,21 @@ Tensor<DATA_T> Tensor<DATA_T>::operator+(const Tensor<DATA_T>& other) const
         throw std::invalid_argument("Both tensors must have their data on the same platform");
     }
 
-    Tensor<DATA_T> result;
+    auto result = clone();
 
     switch(this_device)
     {
         case PLATFORM::HOST:
-            add_on_host(other, result);
+            add_on_host(other, *result);
             break;
-        // case PLATFORM::DEVICE:
-        //     add_on_device(other, result);
-        //     break;
+        case PLATFORM::DEVICE:
+            add_on_device(other, *result);
+            break;
         default:
             std::cerr << "Data must either reside on host or device" << std::endl;
             break; 
     }
-    return result;
+    return *result;
 }
 
 template<typename DATA_T>
@@ -174,21 +190,21 @@ Tensor<DATA_T> Tensor<DATA_T>::operator*(const Tensor<DATA_T>& other) const
         throw std::invalid_argument("Dimensions are not feasible for matrix multiplication");
     }
 
-    Tensor<DATA_T> result;
+    auto result = clone();
 
     switch(this_device)
     {
         case PLATFORM::HOST:
-            multiply_on_host(other, result);
+            multiply_on_host(other, *result);
             break;
-        // case PLATFORM::DEVICE:
-        //     multiply_on_device(other, result);
-        //     break;
+        case PLATFORM::DEVICE:
+            multiply_on_device(other, *result);
+            break;
         default:
             std::cerr << "Data must either reside on host or device" << std::endl;
             break; 
     }
-    return result;
+    return *result;
 }
 
 template<typename DATA_T>
@@ -328,13 +344,13 @@ size_t Tensor<DATA_T>::calculate_index(const std::vector<size_t>& indices) const
 template<typename DATA_T>
 void Tensor<DATA_T>::load_to_host()
 {
-    // todo: override in GPU-level derived classes
+    m_platform = PLATFORM::HOST;
 }
 
 template<typename DATA_T>
 void Tensor<DATA_T>::load_to_device()
 {
-    // todo: override in GPU-level derived classes
+    m_platform = PLATFORM::DEVICE;
 }
 
 template<typename DATA_T>
