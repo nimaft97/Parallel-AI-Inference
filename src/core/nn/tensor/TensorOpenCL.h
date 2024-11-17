@@ -17,8 +17,8 @@ public:
 
     virtual void load_to_device() override;
     virtual void load_to_host() override;
-    virtual void add_on_device(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const override;
-    virtual void multiply_on_device(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const override;
+    virtual Tensor<DATA_T> add_on_device(const Tensor<DATA_T>& other) const;
+    virtual Tensor<DATA_T> multiply_on_device(const Tensor<DATA_T>& other) const;
 
 protected:
     virtual std::unique_ptr<Tensor<DATA_T>> clone() const override;
@@ -88,6 +88,7 @@ void TensorOpenCL<DATA_T>::release_device_data()
 template<typename DATA_T>
 void TensorOpenCL<DATA_T>::load_to_host()
 {
+    std::cerr << "load_to_host TensorOpenCL\n";
     const auto size_in_byte = m_size * sizeof(DATA_T);
     m_err = clEnqueueReadBuffer(m_queue, m_device_data, CL_TRUE, 0, size_in_byte, m_host_data.data(), 0, NULL, NULL);
     CHECK_CL_ERROR(m_err, "Couldn't write device data back to host");
@@ -122,20 +123,20 @@ void TensorOpenCL<DATA_T>::load_to_device()
 }
 
 template<typename DATA_T>
-void TensorOpenCL<DATA_T>::add_on_device(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const
+Tensor<DATA_T> TensorOpenCL<DATA_T>::add_on_device(const Tensor<DATA_T>& other) const
 {
+    if (!is_operation_valid(*this, other, PLATFORM::DEVICE))
+    {
+        throw std::invalid_argument("Not all tensors are on the same platform");
+    }
     const TensorOpenCL<DATA_T>* other_ptr = dynamic_cast<const TensorOpenCL<DATA_T>*>(&other);
-    TensorOpenCL<DATA_T>* result_ptr = dynamic_cast<TensorOpenCL<DATA_T>*>(&result);
+    TensorOpenCL<DATA_T> result = TensorOpenCL<DATA_T>(*this);
 
     if (!other_ptr)
     {
-        throw std::invalid_argument("Wasn't able to downcast provided inputs");
+        throw std::invalid_argument("Wasn't able to downcast provided input");
     }
-    
-    if (!result_ptr)
-    {
-        throw std::invalid_argument("Wasn't able to downcast provided inputs");
-    }
+
     // create kernel
     cl_kernel kernel = clCreateKernel(m_program, "matSum", &m_err);
     CHECK_CL_ERROR(m_err, "Couldn't create the matSum kernel");
@@ -145,7 +146,7 @@ void TensorOpenCL<DATA_T>::add_on_device(const Tensor<DATA_T>& other, Tensor<DAT
     CHECK_CL_ERROR(m_err, "Couldn't set arg 1");
     m_err = clSetKernelArg(kernel, 1, sizeof(cl_mem), &(other_ptr->m_device_data));
     CHECK_CL_ERROR(m_err, "Couldn't set arg 2");
-    m_err = clSetKernelArg(kernel, 2, sizeof(cl_mem), &(result_ptr->m_device_data));
+    m_err = clSetKernelArg(kernel, 2, sizeof(cl_mem), &(result.m_device_data));
     CHECK_CL_ERROR(m_err, "Couldn't set arg 3");
     m_err = clSetKernelArg(kernel, 3, sizeof(m_size), &m_size);
     CHECK_CL_ERROR(m_err, "Couldn't set arg 4");
@@ -155,12 +156,19 @@ void TensorOpenCL<DATA_T>::add_on_device(const Tensor<DATA_T>& other, Tensor<DAT
     // enqueue the kernel for execution
     m_err = clEnqueueNDRangeKernel(m_queue, kernel, 1, NULL, &global_size, NULL, 0, NULL, NULL);
     CHECK_CL_ERROR(m_err, "Couldn't launch the prefixSum kernel");
+
+    return result;
 }
 
 template<typename DATA_T>
-void TensorOpenCL<DATA_T>::multiply_on_device(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const
+Tensor<DATA_T> TensorOpenCL<DATA_T>::multiply_on_device(const Tensor<DATA_T>& other) const
 {
+    if (!is_operation_valid(*this, other, PLATFORM::DEVICE))
+    {
+        throw std::invalid_argument("Not all tensors are on the same platform");
+    }
     // todo: override in GPU-level derived classes
+    return other;
 }
 
 #endif  // TENSOR_OPENCL_H

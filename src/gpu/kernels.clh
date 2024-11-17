@@ -1,5 +1,24 @@
 #define GEMM_TILE_DIM 16
 
+__kernel void matSum(__global float* lBuffer, __global float* rBuffer, __global float* resultBuffer,
+                     const uint length)
+{
+    // this kernel only uses the global memory
+    const uint global_size = get_global_size(0);
+    const uint thread_idx = get_global_id(0);
+
+    if (thread_idx >= length)
+    {
+        return;
+    }
+
+    for (uint i = thread_idx; i < length; i += global_size)
+    {
+        resultBuffer[i] = lBuffer[i] + rBuffer[i];
+        printf("thread idx: %u loop idx: %u -> %f + %f = %f\n", thread_idx, i, lBuffer[i], rBuffer[i], resultBuffer[i]);
+    }
+}
+
 __kernel void matMul(__global float* lBuffer, __global float* rBuffer, __global float* resultBuffer,
                      const uint lDim_0, const uint lDim_1, const uint rDim_1)
 {
