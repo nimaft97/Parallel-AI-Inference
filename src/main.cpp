@@ -63,7 +63,9 @@ int main(int argc, char** argv)
     t2_opencl.load_to_device();
     // t2_opencl.load_to_host();
     std::cout << "t2_opencl: "    << t2_opencl.to_string(true, true, true, true);
-    auto t3_opencl = t_opencl.add_on_device(t2_opencl);
+
+    auto t3_opencl = TensorOpenCL(t_opencl);
+    t_opencl.add(t2_opencl, t3_opencl);
     t3_opencl.load_to_host();
     clFinish(queue);
     std::cout << "t3_opencl: "    << t3_opencl.to_string(true, true, true, true);
