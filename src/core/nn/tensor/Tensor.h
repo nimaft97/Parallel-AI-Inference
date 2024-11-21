@@ -28,6 +28,7 @@ public:
     {
         if (!is_indices_valid(std::forward<Args>(indices)...))
         {
+            std::cerr <<  __FILE__ << ": "<< __LINE__ << std::endl;
             throw std::invalid_argument("Passed indices are not valid");
         }
         const auto indices_vec = std::vector<size_t>({static_cast<size_t>(indices)...});
@@ -39,6 +40,7 @@ public:
     {
         if (!is_indices_valid(std::forward<Args>(indices)...))
         {
+            std::cerr <<  __FILE__ << ": "<< __LINE__ << std::endl;
             throw std::invalid_argument("Passed indices are not valid");
         }
         const auto indices_vec = std::vector<size_t>({static_cast<size_t>(indices)...});
@@ -51,19 +53,19 @@ public:
     virtual void load_to_device();
     virtual void load_to_host();
 
-    virtual void add(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const;
-    virtual void multiply(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const;
+    virtual void add(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const;
+    virtual void multiply(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const;
 
     virtual std::string to_string(bool platform=true, bool dim=true, bool total_size=true, bool data=false) const;
+    virtual Tensor<DATA_T>* clone() const;
 
 protected:
-    virtual void add_on_host(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const;
-    virtual void multiply_on_host(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const;
-    virtual void add_on_device(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const;
-    virtual void multiply_on_device(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const;
+    virtual void add_on_host(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const;
+    virtual void multiply_on_host(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const;
+    virtual void add_on_device(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const;
+    virtual void multiply_on_device(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const;
 
-    virtual std::unique_ptr<Tensor<DATA_T>> clone() const;
-    virtual bool is_operation_valid(const Tensor<DATA_T>& left, const Tensor<DATA_T>& right, const Tensor<DATA_T>& result, PLATFORM platform) const;
+    virtual bool is_operation_valid(const Tensor<DATA_T>* left, const Tensor<DATA_T>* right, const Tensor<DATA_T>* result, PLATFORM platform) const;
 private:
     size_t calculate_index(const std::vector<size_t>& indices) const;
     template<typename... Args>
@@ -96,9 +98,9 @@ Tensor<DATA_T>::Tensor(const Tensor<DATA_T>& other)
 }
 
 template<typename DATA_T>
-std::unique_ptr<Tensor<DATA_T>> Tensor<DATA_T>::clone() const
+Tensor<DATA_T>* Tensor<DATA_T>::clone() const
 {
-    return std::make_unique<Tensor<DATA_T>>(Tensor<DATA_T>(*this));
+    return new Tensor<DATA_T>(*this);
 }
 
 template<typename DATA_T>
@@ -143,11 +145,11 @@ void Tensor<DATA_T>::set_host_data(const std::vector<DATA_T>& flattened_data)
 }
 
 template<typename DATA_T>
-bool Tensor<DATA_T>::is_operation_valid(const Tensor<DATA_T>& left, const Tensor<DATA_T>& right, const Tensor<DATA_T>& result, PLATFORM platform) const
+bool Tensor<DATA_T>::is_operation_valid(const Tensor<DATA_T>* left, const Tensor<DATA_T>* right, const Tensor<DATA_T>* result, PLATFORM platform) const
 {
-    const auto this_plat   = left.get_platform();
-    const auto other_plat  = right.get_platform();
-    const auto result_plat = result.get_platform();
+    const auto this_plat   = left->get_platform();
+    const auto other_plat  = right->get_platform();
+    const auto result_plat = result->get_platform();
 
     if (!(this_plat == other_plat && this_plat == result_plat && this_plat == platform))
     {
@@ -157,21 +159,23 @@ bool Tensor<DATA_T>::is_operation_valid(const Tensor<DATA_T>& left, const Tensor
 }
 
 template<typename DATA_T>
-void Tensor<DATA_T>::add(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const
+void Tensor<DATA_T>::add(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const
 {
-    if (!is_operation_valid(*this, other, result, m_platform))
+    if (!is_operation_valid(this, other, result, m_platform))
     {
+        std::cerr <<  __FILE__ << ": "<< __LINE__ << std::endl;
         throw std::invalid_argument("Not all tensors are on the same platform");
     }
     
     // check if dimensions are valid
-    const auto other_dims = other.get_dims(); 
+    const auto other_dims = other->get_dims(); 
     if (!(m_dims.size() == 2 && other_dims.size() == 2 && m_dims[0] == other_dims[0] && m_dims[1] == other_dims[1]))
     {
+        std::cerr <<  __FILE__ << ": "<< __LINE__ << std::endl;
         throw std::runtime_error("Invalid dimensions");
     }
 
-    result.set_dims(m_dims);
+    result->set_dims(m_dims);
 
     switch (m_platform)
     {
@@ -187,21 +191,23 @@ void Tensor<DATA_T>::add(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) co
 }
 
 template<typename DATA_T>
-void Tensor<DATA_T>::multiply(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const
+void Tensor<DATA_T>::multiply(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const
 {
-    if (!is_operation_valid(*this, other, result, m_platform))
+    if (!is_operation_valid(this, other, result, m_platform))
     {
+        std::cerr <<  __FILE__ << ": "<< __LINE__ << std::endl;
         throw std::invalid_argument("Not all tensors are on the same platform");
     }
     
     // check if dimensions are valid
-    const auto other_dims = other.get_dims(); 
+    const auto other_dims = other->get_dims(); 
     if (!(m_dims.size() == 2 && other_dims.size() == 2 && m_dims[1] == other_dims[0]))
     {
+        std::cerr <<  __FILE__ << ": "<< __LINE__ << std::endl;
         throw std::runtime_error("Invalid dimensions");
     }
 
-    result.set_dims({m_dims[0], other.m_dims[1]});
+    result->set_dims({m_dims[0], other->m_dims[1]});
 
     switch (m_platform)
     {
@@ -217,36 +223,36 @@ void Tensor<DATA_T>::multiply(const Tensor<DATA_T>& other, Tensor<DATA_T>& resul
 }
 
 template<typename DATA_T>
-void Tensor<DATA_T>::add_on_host(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const
+void Tensor<DATA_T>::add_on_host(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const
 {
-    std::transform(result.m_host_data.begin(), result.m_host_data.end(), other.m_host_data.begin(), result.m_host_data.begin(), std::plus<DATA_T>());
+    std::transform(result->m_host_data.begin(), result->m_host_data.begin() + result->get_size(), other->m_host_data.begin(), result->m_host_data.begin(), std::plus<DATA_T>());
 }
 
 template<typename DATA_T>
-void Tensor<DATA_T>::multiply_on_host(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const
+void Tensor<DATA_T>::multiply_on_host(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const
 {
     for (auto i = 0u; i < m_dims[0]; ++i)
     {
-        for (auto j = 0u; j < other.m_dims[1]; ++j)
+        for (auto j = 0u; j < other->m_dims[1]; ++j)
         {
             DATA_T sum = static_cast<DATA_T>(0);
             for (auto k = 0u; k < m_dims[1]; ++k)
             {
-                sum += (*this)(i, k) * other(k, j);
+                sum += (*this)(i, k) * (*other)(k, j);
             }
-            result(i, j) = sum;
+            (*result)(i, j) = sum;
         }
     }
 }
 
 template<typename DATA_T>
-void Tensor<DATA_T>::add_on_device(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const
+void Tensor<DATA_T>::add_on_device(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const
 {
     // to be overwritten by derived classes if needed
 }
 
 template<typename DATA_T>
-void Tensor<DATA_T>::multiply_on_device(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const
+void Tensor<DATA_T>::multiply_on_device(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const
 {
     // to be overwritten by derived classes if needed
 }

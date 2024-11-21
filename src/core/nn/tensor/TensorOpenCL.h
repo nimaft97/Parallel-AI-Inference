@@ -18,11 +18,11 @@ public:
     virtual void load_to_device() override;
     virtual void load_to_host() override;
 
+    virtual Tensor<DATA_T>* clone() const override;
 protected:
-    virtual void add_on_device(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const override;
-    virtual void multiply_on_device(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const override;
+    virtual void add_on_device(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const override;
+    virtual void multiply_on_device(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const override;
 
-    virtual std::unique_ptr<Tensor<DATA_T>> clone() const override;
 
 private:
     void release_device_data();
@@ -71,9 +71,9 @@ TensorOpenCL<DATA_T>::~TensorOpenCL()
 }
 
 template<typename DATA_T>
-std::unique_ptr<Tensor<DATA_T>> TensorOpenCL<DATA_T>::clone() const
+Tensor<DATA_T>* TensorOpenCL<DATA_T>::clone() const
 {
-    return std::make_unique<TensorOpenCL<DATA_T>>(TensorOpenCL<DATA_T>(*this));
+    return new TensorOpenCL<DATA_T>(*this);
 }
 
 template<typename DATA_T>
@@ -89,49 +89,57 @@ void TensorOpenCL<DATA_T>::release_device_data()
 template<typename DATA_T>
 void TensorOpenCL<DATA_T>::load_to_host()
 {
-    std::cerr << "load_to_host TensorOpenCL\n";
-    const auto size_in_byte = m_size * sizeof(DATA_T);
-    m_err = clEnqueueReadBuffer(m_queue, m_device_data, CL_TRUE, 0, size_in_byte, m_host_data.data(), 0, NULL, NULL);
-    CHECK_CL_ERROR(m_err, "Couldn't write device data back to host");
+    if (m_platform != PLATFORM::HOST)
+    {
+        std::cerr << "platform: " << m_platform << std::endl;
+        const auto size_in_byte = m_size * sizeof(DATA_T);
+        m_err = clEnqueueReadBuffer(m_queue, m_device_data, CL_TRUE, 0, size_in_byte, m_host_data.data(), 0, NULL, NULL);
+        CHECK_CL_ERROR(m_err, "Couldn't write device data back to host");
 
-    Tensor<DATA_T>::load_to_host();
+        Tensor<DATA_T>::load_to_host();
+    }
 }
 
 // this function re-allocates a gpu buffer
 template<typename DATA_T>
 void TensorOpenCL<DATA_T>::load_to_device()
 {
-    release_device_data();
-
-    // todo: not all buffers need to be read/write
-    // host data cannot be empty
-
-    const auto size_in_byte = m_size * sizeof(DATA_T);
-
-    m_device_data = clCreateBuffer(m_context, CL_MEM_READ_WRITE, size_in_byte, NULL, &m_err);
-    CHECK_CL_ERROR(m_err, "Couldn't create device buffer");
-
-    // transfer data from host to device
-    m_err = clEnqueueWriteBuffer(m_queue, m_device_data, CL_TRUE, 0, size_in_byte, m_host_data.data(), 0, NULL, NULL);
-    CHECK_CL_ERROR(m_err, "Couldn't write host data to device buffer");
-
-    if (!m_device_data)
+    if (m_platform != PLATFORM::DEVICE)
     {
-        throw std::runtime_error("device buffer is null");
-    }
+        release_device_data();
 
-    Tensor<DATA_T>::load_to_device();
+        // todo: not all buffers need to be read/write
+        // host data cannot be empty
+
+        const auto size_in_byte = m_size * sizeof(DATA_T);
+
+        m_device_data = clCreateBuffer(m_context, CL_MEM_READ_WRITE, size_in_byte, NULL, &m_err);
+        CHECK_CL_ERROR(m_err, "Couldn't create device buffer");
+
+        // transfer data from host to device
+        m_err = clEnqueueWriteBuffer(m_queue, m_device_data, CL_TRUE, 0, size_in_byte, m_host_data.data(), 0, NULL, NULL);
+        CHECK_CL_ERROR(m_err, "Couldn't write host data to device buffer");
+
+        if (!m_device_data)
+        {
+            std::cerr <<  __FILE__ << ": "<< __LINE__ << std::endl;
+            throw std::runtime_error("device buffer is null");
+        }
+
+        Tensor<DATA_T>::load_to_device();
+    }
 }
 
 template<typename DATA_T>
-void TensorOpenCL<DATA_T>::add_on_device(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const
+void TensorOpenCL<DATA_T>::add_on_device(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const
 {
-    const TensorOpenCL<DATA_T>* other_ptr = dynamic_cast<const TensorOpenCL<DATA_T>*>(&other);
-    TensorOpenCL<DATA_T>* result_ptr = dynamic_cast<TensorOpenCL<DATA_T>*>(&result);
+    auto other_ptr = dynamic_cast<const TensorOpenCL<DATA_T>*>(other);
+    auto result_ptr = dynamic_cast<TensorOpenCL<DATA_T>*>(result);
 
     if (!other_ptr || !result_ptr)
     {
-        throw std::invalid_argument("Wasn't able to downcast provided input");
+        std::cerr <<  __FILE__ << ": "<< __LINE__ << std::endl;
+        throw std::runtime_error("Couldn't cast to TensorOpenCL");
     }
 
     // create kernel
@@ -156,7 +164,7 @@ void TensorOpenCL<DATA_T>::add_on_device(const Tensor<DATA_T>& other, Tensor<DAT
 }
 
 template<typename DATA_T>
-void TensorOpenCL<DATA_T>::multiply_on_device(const Tensor<DATA_T>& other, Tensor<DATA_T>& result) const
+void TensorOpenCL<DATA_T>::multiply_on_device(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const
 {
     // todo
 }

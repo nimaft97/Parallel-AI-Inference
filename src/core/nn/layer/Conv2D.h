@@ -6,7 +6,7 @@
 class Conv2D : public Layer
 {
 public:
-    virtual Tensor<float> forward(const Tensor<float>& input) const override;
+    virtual void forward(const Tensor<float>* input, Tensor<float>* result1, Tensor<float>* result2) const override;
     // virtual void to_device() override;
     // virtual void to_host() override;
 

@@ -1,9 +1,9 @@
 #include "Conv2D.h"
 
-Tensor<float> Conv2D::forward(const Tensor<float>& input) const
+void Conv2D::forward(const Tensor<float>* input, Tensor<float>* result1, Tensor<float>* result2) const
 {
+    std::cerr <<  __FILE__ << ": "<< __LINE__ << std::endl;
     // do something
-    return Tensor<float>();
 }
 
 // void Conv2D::to_device()
