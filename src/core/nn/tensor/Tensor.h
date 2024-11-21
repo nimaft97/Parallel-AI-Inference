@@ -207,7 +207,7 @@ void Tensor<DATA_T>::multiply(const Tensor<DATA_T>* other, Tensor<DATA_T>* resul
         throw std::runtime_error("Invalid dimensions");
     }
 
-    result->set_dims({m_dims[0], other->m_dims[1]});
+    result->set_dims({m_dims[0], other_dims[1]});
 
     switch (m_platform)
     {
@@ -225,7 +225,7 @@ void Tensor<DATA_T>::multiply(const Tensor<DATA_T>* other, Tensor<DATA_T>* resul
 template<typename DATA_T>
 void Tensor<DATA_T>::add_on_host(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const
 {
-    std::transform(result->m_host_data.begin(), result->m_host_data.begin() + result->get_size(), other->m_host_data.begin(), result->m_host_data.begin(), std::plus<DATA_T>());
+    std::transform(m_host_data.begin(), m_host_data.begin() + get_size(), other->m_host_data.begin(), result->m_host_data.begin(), std::plus<DATA_T>());
 }
 
 template<typename DATA_T>
@@ -240,6 +240,7 @@ void Tensor<DATA_T>::multiply_on_host(const Tensor<DATA_T>* other, Tensor<DATA_T
             {
                 sum += (*this)(i, k) * (*other)(k, j);
             }
+            std::cerr << "i: " << i << ", j: " << j << ", sum: " << sum << std::endl;
             (*result)(i, j) = sum;
         }
     }
