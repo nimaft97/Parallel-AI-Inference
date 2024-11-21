@@ -166,7 +166,41 @@ void TensorOpenCL<DATA_T>::add_on_device(const Tensor<DATA_T>* other, Tensor<DAT
 template<typename DATA_T>
 void TensorOpenCL<DATA_T>::multiply_on_device(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const
 {
-    // todo
+    auto other_ptr = dynamic_cast<const TensorOpenCL<DATA_T>*>(other);
+    auto result_ptr = dynamic_cast<TensorOpenCL<DATA_T>*>(result);
+
+    if (!other_ptr || !result_ptr)
+    {
+        std::cerr <<  __FILE__ << ": "<< __LINE__ << std::endl;
+        throw std::runtime_error("Couldn't cast to TensorOpenCL");
+    }
+
+    const auto other_dims = other_ptr->get_dims();
+
+    // create kernel
+    cl_kernel kernel = clCreateKernel(m_program, "gemm", &m_err);
+    CHECK_CL_ERROR(m_err, "Couldn't create the matSum kernel");
+
+    // set kernel args
+    m_err = clSetKernelArg(kernel, 0, sizeof(cl_mem), &m_device_data);
+    CHECK_CL_ERROR(m_err, "Couldn't set arg 1");
+    m_err = clSetKernelArg(kernel, 1, sizeof(cl_mem), &(other_ptr->m_device_data));
+    CHECK_CL_ERROR(m_err, "Couldn't set arg 2");
+    m_err = clSetKernelArg(kernel, 2, sizeof(cl_mem), &(result_ptr->m_device_data));
+    CHECK_CL_ERROR(m_err, "Couldn't set arg 3");
+    m_err = clSetKernelArg(kernel, 3, sizeof(m_size), &m_dims[0]);
+    CHECK_CL_ERROR(m_err, "Couldn't set arg 4");
+    m_err = clSetKernelArg(kernel, 4, sizeof(m_size), &m_dims[1]);
+    CHECK_CL_ERROR(m_err, "Couldn't set arg 5");
+    m_err = clSetKernelArg(kernel, 5, sizeof(m_size), &other_dims[1]);
+    CHECK_CL_ERROR(m_err, "Couldn't set arg 6");
+
+    size_t global_size[] = {32u, 32u};
+    size_t local_size[] = {16u, 16u};
+
+    // enqueue the kernel for execution
+    m_err = clEnqueueNDRangeKernel(m_queue, kernel, 1, NULL, global_size, local_size, 0, NULL, NULL);
+    CHECK_CL_ERROR(m_err, "Couldn't launch the prefixSum kernel");
 }
 
 #endif  // TENSOR_OPENCL_H
