@@ -50,52 +50,62 @@ int main(int argc, char** argv)
     err = clBuildProgram(program, 1, &device, NULL, NULL, NULL);
     CHECK_CL_ERROR(err, "Couldn't build the program");
 
-    auto t_opencl = TensorOpenCL<float>(program, queue, context);
-    t_opencl.set_host_data({1.0f, 2.0f, 3.0f});
-    t_opencl.set_dims({1, 3});
-    t_opencl.load_to_device();
-    // t_opencl.load_to_host();
-    std::cout << "t_opencl: "    << t_opencl.to_string(true, true, true, true);
+    // auto t_opencl = TensorOpenCL<float>(program, queue, context);
+    // t_opencl.set_host_data({1.0f, 2.0f, 3.0f});
+    // t_opencl.set_dims({1, 3});
+    // t_opencl.load_to_device();
+    // // t_opencl.load_to_host();
+    // std::cout << "t_opencl: "    << t_opencl.to_string(true, true, true, true);
 
-    auto t2_opencl = TensorOpenCL<float>(program, queue, context);
-    t2_opencl.set_host_data({1.0f, 2.0f, 3.0f});
-    t2_opencl.set_dims({1, 3});
-    t2_opencl.load_to_device();
-    // t2_opencl.load_to_host();
-    std::cout << "t2_opencl: "    << t2_opencl.to_string(true, true, true, true);
+    // auto t2_opencl = TensorOpenCL<float>(program, queue, context);
+    // t2_opencl.set_host_data({1.0f, 2.0f, 3.0f});
+    // t2_opencl.set_dims({1, 3});
+    // t2_opencl.load_to_device();
+    // // t2_opencl.load_to_host();
+    // std::cout << "t2_opencl: "    << t2_opencl.to_string(true, true, true, true);
 
-    auto t3_opencl = TensorOpenCL(t_opencl);
-    t_opencl.add(t2_opencl, t3_opencl);
-    t3_opencl.load_to_host();
-    clFinish(queue);
-    std::cout << "t3_opencl: "    << t3_opencl.to_string(true, true, true, true);
+    // auto t3_opencl = TensorOpenCL(t_opencl);
+    // t_opencl.add(t2_opencl, t3_opencl);
+    // t3_opencl.load_to_host();
+    // clFinish(queue);
+    // std::cout << "t3_opencl: "    << t3_opencl.to_string(true, true, true, true);
 
     
 
-    // auto input = Tensor<float>();
-    // input.set_host_data({1.0f, 2.0f, 3.0f});
-    // input.set_dims({1, 3});
+    auto input = new TensorOpenCL<float>(program, queue, context);
+    input->set_host_data({1.0f, 2.0f, 3.0f});
+    input->set_dims({1, 3});
+    input->load_to_device();
 
-    // auto weight = Tensor<float>();
-    // weight.set_host_data({3.0f, 2.0f, 1.0f});
-    // weight.set_dims({3, 1});
+    auto result = new TensorOpenCL<float>(program, queue, context);
+    result->set_host_data({1.0f, 2.0f, 3.0f});
+    result->set_dims({1, 3});
+    result->load_to_device();
 
-    // auto bias  = Tensor<float>();
-    // bias.set_host_data({5.0f});
-    // bias.set_dims({1, 1});
+    auto weight = new TensorOpenCL<float>(program, queue, context);
+    weight->set_host_data({3.0f, 2.0f, 1.0f});
+    weight->set_dims({3, 1});
+    weight->load_to_device();
+
+    auto bias  = new TensorOpenCL<float>(program, queue, context);
+    bias->set_host_data({5.0f});
+    bias->set_dims({1, 1});
+    bias->load_to_device();
     
-    // auto dense = Dense();
-    // dense.set_weight(weight);
-    // dense.set_bias(bias);
+    auto dense = new Dense();
+    dense->set_weight(weight);
+    dense->set_bias(bias);
+    dense->to_device();
 
-    // auto model = Model();
-    // model.add_layer(&dense);
+    auto model = Model();
+    model.add_layer(dense);
+    model.execute(input, result);
 
-    // auto result = model.execute(input);
+    result->load_to_host();
     
 
-    // std::cout << "input: "    << input.to_string(true, true, true, true);
-    // std::cout << "weight: "   << weight.to_string(true, true, true, true);
-    // std::cout << "bias: "     << bias.to_string(true, true, true, true);
-    // std::cout << "result: "   << result.to_string(true, true, true, true);
+    std::cout << "input: "    << input->to_string(true, true, true, true);
+    std::cout << "weight: "   << weight->to_string(true, true, true, true);
+    std::cout << "bias: "     << bias->to_string(true, true, true, true);
+    std::cout << "result: "   << result->to_string(true, true, true, true);
 }
