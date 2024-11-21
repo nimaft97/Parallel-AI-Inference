@@ -78,7 +78,7 @@ int main(int argc, char** argv)
     input->load_to_device();
 
     auto result = new TensorOpenCL<float>(program, queue, context);
-    result->set_host_data({1.0f, 2.0f, 3.0f});
+    result->set_host_data({0.0f, 0.0f, 0.0f});
     result->set_dims({1, 3});
     result->load_to_device();
 
