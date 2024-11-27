@@ -225,7 +225,14 @@ void Tensor<DATA_T>::multiply(const Tensor<DATA_T>* other, Tensor<DATA_T>* resul
 template<typename DATA_T>
 void Tensor<DATA_T>::add_on_host(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const
 {
-    std::transform(m_host_data.begin(), m_host_data.begin() + get_size(), other->m_host_data.begin(), result->m_host_data.begin(), std::plus<DATA_T>());
+    // std::transform(m_host_data.begin(), m_host_data.begin() + get_size(), other->m_host_data.begin(), result->m_host_data.begin(), std::plus<DATA_T>());
+    for (auto i = 0u; i < m_dims[0]; ++i)
+    {
+        for (auto j = 0u; j < m_dims[1]; ++j)
+        {
+            (*result)(i, j) = (*this)(i, j) + (*other)(i, j);
+        }
+    }
 }
 
 template<typename DATA_T>
@@ -240,7 +247,6 @@ void Tensor<DATA_T>::multiply_on_host(const Tensor<DATA_T>* other, Tensor<DATA_T
             {
                 sum += (*this)(i, k) * (*other)(k, j);
             }
-            std::cerr << "i: " << i << ", j: " << j << ", sum: " << sum << std::endl;
             (*result)(i, j) = sum;
         }
     }
@@ -366,7 +372,6 @@ size_t Tensor<DATA_T>::calculate_index(const std::vector<size_t>& indices) const
 template<typename DATA_T>
 void Tensor<DATA_T>::load_to_host()
 {
-    std::cerr << "load_to_host Tensor\n";
     m_platform = PLATFORM::HOST;
 }
 

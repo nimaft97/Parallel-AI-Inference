@@ -40,13 +40,13 @@ bool Model::execute(const Tensor<float>* input, Tensor<float>* result1) const
         }
     }
 
-    if (m_layers.size() % 3 == 1)
+    if (m_layers.size() % 3 == 2)
     {
-        result1 = std::move(result2);
+        *result1 = *result2->clone();
     }
-    else if (m_layers.size() % 3 == 2)
+    else if (m_layers.size() % 3 == 0)
     {
-        result1 = std::move(result3);
+        *result1 = *result3->clone();
     }
 
     delete result2;
