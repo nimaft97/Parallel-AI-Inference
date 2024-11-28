@@ -15,22 +15,18 @@ void Dense::forward(const Tensor<float>* input, Tensor<float>* result1, Tensor<f
 
 void Dense::to_device()
 {
-    if (m_platform != PLATFORM::DEVICE)
-    {
-        m_weight->load_to_device();
-        m_bias->load_to_device();
-        m_platform = PLATFORM::DEVICE;
-    }
+
+    m_weight->load_to_device();
+    m_bias->load_to_device();
+    m_platform = PLATFORM::DEVICE;
 }
 
 void Dense::to_host()
 {
-    if (m_platform != PLATFORM::HOST)
-    {
-        m_weight->load_to_host();
-        m_bias->load_to_host();
-        m_platform = PLATFORM::HOST;
-    }
+
+    m_weight->load_to_host();
+    m_bias->load_to_host();
+    m_platform = PLATFORM::HOST;
 }
 
 void Dense::set_weight(Tensor<float>* weight)
