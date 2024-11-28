@@ -15,7 +15,7 @@ __kernel void matSum(__global float* lBuffer, __global float* rBuffer, __global 
     for (uint i = thread_idx; i < length; i += global_size)
     {
         resultBuffer[i] = lBuffer[i] + rBuffer[i];
-        printf("thread idx: %u loop idx: %u -> %f + %f = %f\n", thread_idx, i, lBuffer[i], rBuffer[i], resultBuffer[i]);
+        // printf("thread idx: %u loop idx: %u -> %f + %f = %f\n", thread_idx, i, lBuffer[i], rBuffer[i], resultBuffer[i]);
     }
 }
 
