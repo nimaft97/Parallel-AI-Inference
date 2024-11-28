@@ -58,6 +58,7 @@ public:
 
     virtual std::string to_string(bool platform=true, bool dim=true, bool total_size=true, bool data=false) const;
     virtual Tensor<DATA_T>* clone() const;
+    virtual void swap(Tensor<DATA_T>* other_ptr);
 
 protected:
     virtual void add_on_host(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const;
@@ -101,6 +102,15 @@ template<typename DATA_T>
 Tensor<DATA_T>* Tensor<DATA_T>::clone() const
 {
     return new Tensor<DATA_T>(*this);
+}
+
+template<typename DATA_T>
+void Tensor<DATA_T>::swap(Tensor<DATA_T>* other_ptr)
+{
+    std::swap(m_host_data, other_ptr->m_host_data);
+    std::swap(m_dims, other_ptr->m_dims);
+    std::swap(m_size, other_ptr->m_size);
+    std::swap(m_platform, other_ptr->m_platform);
 }
 
 template<typename DATA_T>

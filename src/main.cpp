@@ -53,14 +53,14 @@ int main(int argc, char** argv)
     auto input = new TensorOpenCL<float>(program, queue, context);
     input->set_host_data({1.0f, 2.0f, 3.0f});
     input->set_dims({1, 3});
-    input->load_to_host();
+    input->load_to_device();
 
     auto result = new TensorOpenCL<float>(program, queue, context);
     result->set_host_data({0.0f, 0.0f, 0.0f,
                            0.0f, 0.0f, 0.0f,
                            0.0f, 0.0f, 0.0f});
     result->set_dims({3, 3});
-    result->load_to_host();
+    result->load_to_device();
 
     // dense 1
     auto weight1 = new TensorOpenCL<float>(program, queue, context);
@@ -68,17 +68,17 @@ int main(int argc, char** argv)
                             6.0f, 5.0f, 4.0f,
                             2.0f, 3.0f, 4.0f});
     weight1->set_dims({3, 3});
-    weight1->load_to_host();
+    weight1->load_to_device();
 
     auto bias1  = new TensorOpenCL<float>(program, queue, context);
     bias1->set_host_data({5.0f, 4.0f, 3.0f});
     bias1->set_dims({1, 3});
-    bias1->load_to_host();
+    bias1->load_to_device();
     
     auto dense1 = new Dense();
     dense1->set_weight(weight1);
     dense1->set_bias(bias1);
-    dense1->to_host();
+    dense1->to_device();
 
     // dense 2
     auto weight2 = new TensorOpenCL<float>(program, queue, context);
@@ -86,22 +86,24 @@ int main(int argc, char** argv)
                             2.0f, 1.0f,
                             1.0f, 4.0f});
     weight2->set_dims({3, 2});
-    weight2->load_to_host();
+    weight2->load_to_device();
 
     auto bias2  = new TensorOpenCL<float>(program, queue, context);
     bias2->set_host_data({5.0f, 4.0f});
     bias2->set_dims({1, 2});
-    bias2->load_to_host();
+    bias2->load_to_device();
     
     auto dense2 = new Dense();
     dense2->set_weight(weight2);
     dense2->set_bias(bias2);
-    dense2->to_host();
+    dense2->to_device();
 
     auto model = Model();
     model.add_layer(dense1);
     model.add_layer(dense2);
     model.execute(input, result);
+
+    clFinish(queue);
 
     result->load_to_host();
     

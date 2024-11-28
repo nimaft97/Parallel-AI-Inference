@@ -19,6 +19,8 @@ public:
     virtual void load_to_host() override;
 
     virtual Tensor<DATA_T>* clone() const override;
+    virtual void swap(Tensor<DATA_T>* other_ptr) override;
+
 protected:
     virtual void add_on_device(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const override;
     virtual void multiply_on_device(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const override;
@@ -77,6 +79,23 @@ Tensor<DATA_T>* TensorOpenCL<DATA_T>::clone() const
 }
 
 template<typename DATA_T>
+void TensorOpenCL<DATA_T>::swap(Tensor<DATA_T>* other_ptr)
+{
+    auto other_ptr_opencl = dynamic_cast<TensorOpenCL<DATA_T>*>(other_ptr);
+    if (!other_ptr_opencl)
+    {
+        std::cerr <<  __FILE__ << ": "<< __LINE__ << std::endl;
+        throw std::runtime_error("Couldn't cast to TensorOpenCL");
+    }
+
+    this->Tensor<DATA_T>::swap(other_ptr_opencl);
+    std::swap(m_device_data, other_ptr_opencl->m_device_data);
+    std::swap(m_program, other_ptr_opencl->m_program);
+    std::swap(m_queue, other_ptr_opencl->m_queue);
+    std::swap(m_context, other_ptr_opencl->m_context);
+}
+
+template<typename DATA_T>
 void TensorOpenCL<DATA_T>::release_device_data()
 {
     if (m_device_data)
@@ -91,7 +110,6 @@ void TensorOpenCL<DATA_T>::load_to_host()
 {
     if (m_platform != PLATFORM::HOST)
     {
-        std::cerr << "platform: " << m_platform << std::endl;
         const auto size_in_byte = m_size * sizeof(DATA_T);
         m_err = clEnqueueReadBuffer(m_queue, m_device_data, CL_TRUE, 0, size_in_byte, m_host_data.data(), 0, NULL, NULL);
         CHECK_CL_ERROR(m_err, "Couldn't write device data back to host");

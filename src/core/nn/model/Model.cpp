@@ -9,7 +9,7 @@ void Model::add_layer(const Layer* p_layer)
     m_layers.emplace_back(p_layer);
 }
 
-bool Model::execute(const Tensor<float>* input, Tensor<float>* result1) const
+void Model::execute(const Tensor<float>* input, Tensor<float>* result1) const
 {
     const auto num_layers = m_layers.size();
     if (num_layers == 0)
@@ -42,11 +42,11 @@ bool Model::execute(const Tensor<float>* input, Tensor<float>* result1) const
 
     if (m_layers.size() % 3 == 2)
     {
-        *result1 = *result2->clone();
+        result1->swap(result2);
     }
     else if (m_layers.size() % 3 == 0)
     {
-        *result1 = *result3->clone();
+        result1->swap(result3);
     }
 
     delete result2;
