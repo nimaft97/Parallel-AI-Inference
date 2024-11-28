@@ -4,13 +4,36 @@ Model::Model(): m_layers()
 {
 }
 
-void Model::add_layer(const Layer* p_layer)
+void Model::add_layer(Layer* p_layer)
 {
     m_layers.emplace_back(p_layer);
 }
 
-bool Model::execute(const Tensor<float>* input, Tensor<float>* result1) const
+void Model::to_host()
 {
+    m_platform = PLATFORM::HOST;
+    for (auto layer : m_layers)
+    {
+        layer->to_host();
+    }
+}
+
+void Model::to_device()
+{
+    m_platform = PLATFORM::DEVICE;
+    for (auto layer : m_layers)
+    {
+        layer->to_device();
+    }
+}
+
+void Model::execute(const Tensor<float>* input, Tensor<float>* result1)
+{
+    if (m_platform == PLATFORM::UNKNOWN)
+    {
+        std::cerr <<  __FILE__ << ": "<< __LINE__ << std::endl;
+        throw std::runtime_error("Model is not loaded to a platform");
+    }
     const auto num_layers = m_layers.size();
     if (num_layers == 0)
     {
@@ -40,13 +63,13 @@ bool Model::execute(const Tensor<float>* input, Tensor<float>* result1) const
         }
     }
 
-    if (m_layers.size() % 3 == 1)
+    if (m_layers.size() % 3 == 2)
     {
-        result1 = std::move(result2);
+        result1->swap(result2);
     }
-    else if (m_layers.size() % 3 == 2)
+    else if (m_layers.size() % 3 == 0)
     {
-        result1 = std::move(result3);
+        result1->swap(result3);
     }
 
     delete result2;

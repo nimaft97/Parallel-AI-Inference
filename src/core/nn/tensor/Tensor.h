@@ -58,6 +58,7 @@ public:
 
     virtual std::string to_string(bool platform=true, bool dim=true, bool total_size=true, bool data=false) const;
     virtual Tensor<DATA_T>* clone() const;
+    virtual void swap(Tensor<DATA_T>* other_ptr);
 
 protected:
     virtual void add_on_host(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const;
@@ -101,6 +102,15 @@ template<typename DATA_T>
 Tensor<DATA_T>* Tensor<DATA_T>::clone() const
 {
     return new Tensor<DATA_T>(*this);
+}
+
+template<typename DATA_T>
+void Tensor<DATA_T>::swap(Tensor<DATA_T>* other_ptr)
+{
+    std::swap(m_host_data, other_ptr->m_host_data);
+    std::swap(m_dims, other_ptr->m_dims);
+    std::swap(m_size, other_ptr->m_size);
+    std::swap(m_platform, other_ptr->m_platform);
 }
 
 template<typename DATA_T>
@@ -207,7 +217,7 @@ void Tensor<DATA_T>::multiply(const Tensor<DATA_T>* other, Tensor<DATA_T>* resul
         throw std::runtime_error("Invalid dimensions");
     }
 
-    result->set_dims({m_dims[0], other->m_dims[1]});
+    result->set_dims({m_dims[0], other_dims[1]});
 
     switch (m_platform)
     {
@@ -225,7 +235,14 @@ void Tensor<DATA_T>::multiply(const Tensor<DATA_T>* other, Tensor<DATA_T>* resul
 template<typename DATA_T>
 void Tensor<DATA_T>::add_on_host(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const
 {
-    std::transform(result->m_host_data.begin(), result->m_host_data.begin() + result->get_size(), other->m_host_data.begin(), result->m_host_data.begin(), std::plus<DATA_T>());
+    // std::transform(m_host_data.begin(), m_host_data.begin() + get_size(), other->m_host_data.begin(), result->m_host_data.begin(), std::plus<DATA_T>());
+    for (auto i = 0u; i < m_dims[0]; ++i)
+    {
+        for (auto j = 0u; j < m_dims[1]; ++j)
+        {
+            (*result)(i, j) = (*this)(i, j) + (*other)(i, j);
+        }
+    }
 }
 
 template<typename DATA_T>
@@ -365,7 +382,6 @@ size_t Tensor<DATA_T>::calculate_index(const std::vector<size_t>& indices) const
 template<typename DATA_T>
 void Tensor<DATA_T>::load_to_host()
 {
-    std::cerr << "load_to_host Tensor\n";
     m_platform = PLATFORM::HOST;
 }
 
