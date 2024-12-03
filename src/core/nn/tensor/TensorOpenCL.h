@@ -24,6 +24,7 @@ public:
 protected:
     virtual void add_on_device(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const override;
     virtual void multiply_on_device(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const override;
+    virtual void relu_on_device(Tensor<DATA_T>* result) const override;
 
 
 private:
@@ -178,7 +179,7 @@ void TensorOpenCL<DATA_T>::add_on_device(const Tensor<DATA_T>* other, Tensor<DAT
 
     // enqueue the kernel for execution
     m_err = clEnqueueNDRangeKernel(m_queue, kernel, 1, NULL, &global_size, NULL, 0, NULL, NULL);
-    CHECK_CL_ERROR(m_err, "Couldn't launch the prefixSum kernel");
+    CHECK_CL_ERROR(m_err, "Couldn't launch the matSum kernel");
 }
 
 template<typename DATA_T>
@@ -218,7 +219,37 @@ void TensorOpenCL<DATA_T>::multiply_on_device(const Tensor<DATA_T>* other, Tenso
 
     // enqueue the kernel for execution
     m_err = clEnqueueNDRangeKernel(m_queue, kernel, 1, NULL, global_size, local_size, 0, NULL, NULL);
-    CHECK_CL_ERROR(m_err, "Couldn't launch the prefixSum kernel");
+    CHECK_CL_ERROR(m_err, "Couldn't launch the gemm kernel");
+}
+
+template<typename DATA_T>
+void TensorOpenCL<DATA_T>::relu_on_device(Tensor<DATA_T>* result) const
+{
+    auto result_ptr = dynamic_cast<TensorOpenCL<DATA_T>*>(result);
+
+    if (!result_ptr)
+    {
+        std::cerr <<  __FILE__ << ": "<< __LINE__ << std::endl;
+        throw std::runtime_error("Couldn't cast to TensorOpenCL");
+    }
+
+    // create kernel
+    cl_kernel kernel = clCreateKernel(m_program, "matRelu", &m_err);
+    CHECK_CL_ERROR(m_err, "Couldn't create the matSum kernel");
+
+    // set kernel args
+    m_err = clSetKernelArg(kernel, 0, sizeof(cl_mem), &m_device_data);
+    CHECK_CL_ERROR(m_err, "Couldn't set arg 1");
+    m_err = clSetKernelArg(kernel, 1, sizeof(cl_mem), &(result_ptr->m_device_data));
+    CHECK_CL_ERROR(m_err, "Couldn't set arg 2");
+    m_err = clSetKernelArg(kernel, 2, sizeof(m_size), &m_size);
+    CHECK_CL_ERROR(m_err, "Couldn't set arg 3");
+
+    size_t global_size = 32u;
+
+    // enqueue the kernel for execution
+    m_err = clEnqueueNDRangeKernel(m_queue, kernel, 1, NULL, &global_size, NULL, 0, NULL, NULL);
+    CHECK_CL_ERROR(m_err, "Couldn't launch the matRelu kernel");
 }
 
 #endif  // TENSOR_OPENCL_H

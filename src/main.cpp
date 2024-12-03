@@ -1,6 +1,7 @@
 #include "nn/tensor/TensorOpenCL.h"
 #include "nn/model/Model.h"
 #include "nn/layer/Dense.h"
+#include "nn/layer/Activation.h"
 
 #include <CL/cl.h>
 #include <iostream>
@@ -79,9 +80,9 @@ int main(int argc, char** argv)
 
     // dense 2
     auto weight2 = new TensorOpenCL<float>(program, queue, context);
-    weight2->set_host_data({3.0f, 2.0f,
+    weight2->set_host_data({-3.0f, 2.0f,
                             2.0f, 1.0f,
-                            1.0f, 4.0f});
+                            -1.0f, 4.0f});
     weight2->set_dims({3, 2});
 
     auto bias2  = new TensorOpenCL<float>(program, queue, context);
@@ -92,9 +93,12 @@ int main(int argc, char** argv)
     dense2->set_weight(weight2);
     dense2->set_bias(bias2);
 
+    auto relu1 = new Activation(ACTIVATION::RELU);
+
     auto model = Model();
     model.add_layer(dense1);
     model.add_layer(dense2);
+    model.add_layer(relu1);
     model.to_device();
     model.execute(input, result);
 
