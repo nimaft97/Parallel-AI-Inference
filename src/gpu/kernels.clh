@@ -150,3 +150,21 @@ __kernel void gemm(__global float* lBuffer, __global float* rBuffer, __global fl
         }
     }
 }
+
+__kernel void matRelu(__global float* inBuffer, __global float* outBuffer,
+                     const uint length)
+{
+    // this kernel only uses the global memory
+    const uint global_size = get_global_size(0);
+    const uint thread_idx = get_global_id(0);
+
+    if (thread_idx >= length)
+    {
+        return;
+    }
+
+    for (uint i = thread_idx; i < length; i += global_size)
+    {
+        outBuffer[i] = max(0.0f, inBuffer[i]);
+    }
+}
