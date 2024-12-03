@@ -18,7 +18,7 @@ set(COMMON_SOURCES
     src/core/nn/layer/Layer.cpp
     src/core/nn/layer/Dense.cpp
     src/core/nn/layer/Conv2D.cpp
-    src/core/nn/layer/Relu.cpp
+    src/core/nn/layer/Activation.cpp
     src/bindings/bindings.cpp
 )
 

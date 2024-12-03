@@ -1,7 +1,7 @@
 #include "nn/tensor/TensorOpenCL.h"
 #include "nn/model/Model.h"
 #include "nn/layer/Dense.h"
-#include "nn/layer/Relu.h"
+#include "nn/layer/Activation.h"
 
 #include <CL/cl.h>
 #include <iostream>
@@ -93,7 +93,7 @@ int main(int argc, char** argv)
     dense2->set_weight(weight2);
     dense2->set_bias(bias2);
 
-    auto relu1 = new Relu();
+    auto relu1 = new Activation(ACTIVATION::RELU);
 
     auto model = Model();
     model.add_layer(dense1);
