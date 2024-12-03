@@ -158,12 +158,20 @@ template<typename DATA_T>
 bool Tensor<DATA_T>::is_operation_valid(const Tensor<DATA_T>* left, const Tensor<DATA_T>* right, const Tensor<DATA_T>* result, PLATFORM platform) const
 {
     const auto this_plat   = left->get_platform();
-    const auto other_plat  = right->get_platform();
     const auto result_plat = result->get_platform();
 
-    if (!(this_plat == other_plat && this_plat == result_plat && this_plat == platform))
+    if (!(this_plat == result_plat && this_plat == platform))
     {
         return false;
+    }
+
+    if (right != nullptr)
+    {
+        const auto other_plat  = right->get_platform();
+        if (this_plat != other_plat)
+        {
+            return false;
+        }
     }
     return true;
 }
