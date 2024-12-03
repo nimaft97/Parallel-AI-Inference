@@ -6,12 +6,18 @@
 #include <fstream>
 #include <streambuf>
 
-enum PLATFORM
+enum class PLATFORM
 {
     UNKNOWN = 0,
     HOST,
     DEVICE
 
+};
+
+enum class ACTIVATION
+{
+    UNKNOWN = 0,
+    RELU
 };
 
 std::string read_file(const std::string& file_path);
