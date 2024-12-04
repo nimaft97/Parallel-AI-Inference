@@ -59,6 +59,7 @@ public:
 
     // activations
     virtual void relu(Tensor<DATA_T>* result) const;
+    virtual void argmax(Tensor<DATA_T>* result) const;
 
     virtual std::string to_string(bool platform=true, bool dim=true, bool total_size=true, bool data=false) const;
     virtual Tensor<DATA_T>* clone() const;
@@ -68,9 +69,11 @@ protected:
     virtual void add_on_host(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const;
     virtual void multiply_on_host(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const;
     virtual void relu_on_host(Tensor<DATA_T>* result) const;
+    virtual void argmax_on_host(Tensor<DATA_T>* result) const;
     virtual void add_on_device(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const;
     virtual void multiply_on_device(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const;
     virtual void relu_on_device(Tensor<DATA_T>* result) const;
+    virtual void argmax_on_device(Tensor<DATA_T>* result) const;
 
     virtual bool is_operation_valid(const Tensor<DATA_T>* left, const Tensor<DATA_T>* right, const Tensor<DATA_T>* result, PLATFORM platform) const;
 private:
@@ -271,6 +274,38 @@ void Tensor<DATA_T>::relu(Tensor<DATA_T>* result) const
 }
 
 template<typename DATA_T>
+void Tensor<DATA_T>::argmax(Tensor<DATA_T>* result) const
+{
+    if (!is_operation_valid(this, nullptr, result, m_platform))
+    {
+        std::cerr <<  __FILE__ << ": "<< __LINE__ << std::endl;
+        throw std::invalid_argument("Not all tensors are on the same platform");
+    }
+
+    // at least one of the dimensions must be one
+    if (!(m_dims[0] == 1 || m_dims[1] == 1))
+    {
+        std::cerr <<  __FILE__ << ": "<< __LINE__ << std::endl;
+        throw std::invalid_argument("Input must be a vector");
+    }
+
+
+    result->set_dims({1, 1});
+
+    switch (m_platform)
+    {
+        case PLATFORM::HOST:
+            argmax_on_host(result);
+            break;
+        case PLATFORM::DEVICE:
+            argmax_on_device(result);
+            break;
+        default:
+            std::cerr << "Unsupported platform!";
+    }
+}
+
+template<typename DATA_T>
 void Tensor<DATA_T>::add_on_host(const Tensor<DATA_T>* other, Tensor<DATA_T>* result) const
 {
     // std::transform(m_host_data.begin(), m_host_data.begin() + get_size(), other->m_host_data.begin(), result->m_host_data.begin(), std::plus<DATA_T>());
@@ -326,6 +361,19 @@ void Tensor<DATA_T>::relu_on_host(Tensor<DATA_T>* result) const
 
 template<typename DATA_T>
 void Tensor<DATA_T>::relu_on_device(Tensor<DATA_T>* result) const
+{
+    // to be overwritten by derived classes if needed
+}
+
+template<typename DATA_T>
+void Tensor<DATA_T>::argmax_on_host(Tensor<DATA_T>* result) const
+{
+    const auto max_iter = std::max_element(m_host_data.begin(), m_host_data.begin() + m_size);
+    (*result)(0, 0) = std::distance(m_host_data.begin(), max_iter);
+}
+
+template<typename DATA_T>
+void Tensor<DATA_T>::argmax_on_device(Tensor<DATA_T>* result) const
 {
     // to be overwritten by derived classes if needed
 }

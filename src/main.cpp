@@ -54,14 +54,14 @@ int main(int argc, char** argv)
     auto input = new TensorOpenCL<float>(program, queue, context);
     input->set_host_data({1.0f, 2.0f, 3.0f});
     input->set_dims({1, 3});
-    input->load_to_device();
+    input->load_to_host();
 
     auto result = new TensorOpenCL<float>(program, queue, context);
     result->set_host_data({0.0f, 0.0f, 0.0f,
                            0.0f, 0.0f, 0.0f,
                            0.0f, 0.0f, 0.0f});
     result->set_dims({3, 3});
-    result->load_to_device();
+    result->load_to_host();
 
     // dense 1
     auto weight1 = new TensorOpenCL<float>(program, queue, context);
@@ -94,12 +94,14 @@ int main(int argc, char** argv)
     dense2->set_bias(bias2);
 
     auto relu1 = new Activation(ACTIVATION::RELU);
+    auto argmax1 = new Activation(ACTIVATION::ARGMAX);
 
     auto model = Model();
     model.add_layer(dense1);
-    model.add_layer(dense2);
     model.add_layer(relu1);
-    model.to_device();
+    model.add_layer(dense2);
+    model.add_layer(argmax1);
+    model.to_host();
     model.execute(input, result);
 
     clFinish(queue);
