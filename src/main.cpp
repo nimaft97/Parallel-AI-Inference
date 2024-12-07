@@ -28,6 +28,11 @@ int main(int argc, char** argv)
     {
         // at least one OpenCL capable GPU exists
         std::cout << "GPU found" << std::endl;
+        // Query local memory size
+        cl_ulong localMemSize;
+        err = clGetDeviceInfo(device, CL_DEVICE_LOCAL_MEM_SIZE, sizeof(cl_ulong), &localMemSize, nullptr);
+        CHECK_CL_ERROR(err, "Error querying device info.");
+        std::cout << "Maximum local memory size per work group: " << localMemSize / 1024 << " KB" << std::endl;
     }
     else
     {
