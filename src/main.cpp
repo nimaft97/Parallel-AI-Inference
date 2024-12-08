@@ -54,6 +54,16 @@ int main(int argc, char** argv)
     CHECK_CL_ERROR(err, "Couldn't create the program");
     // build the program
     err = clBuildProgram(program, 1, &device, NULL, NULL, NULL);
+    // ****************** Start of Diagnostic Logs ******************
+    // Query the build log
+    size_t log_size;
+    clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
+    char *log = new char[log_size];
+    clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, log_size, log, NULL);
+    // Print the build log
+    std::cerr << "Build log:\n" << log << std::endl;
+    delete[] log;
+    // ****************** End of Diagnostic Logs ******************
     CHECK_CL_ERROR(err, "Couldn't build the program"); 
 
     auto input = new TensorOpenCL<float>(program, queue, context);
