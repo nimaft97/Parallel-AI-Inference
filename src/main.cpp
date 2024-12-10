@@ -69,14 +69,14 @@ int main(int argc, char** argv)
     auto input = new TensorOpenCL<float>(program, queue, context);
     input->set_host_data({1.0f, 2.0f, 3.0f});
     input->set_dims({1, 3});
-    input->load_to_host();
+    input->load_to_device();
 
     auto result = new TensorOpenCL<float>(program, queue, context);
     result->set_host_data({0.0f, 0.0f, 0.0f,
                            0.0f, 0.0f, 0.0f,
                            0.0f, 0.0f, 0.0f});
     result->set_dims({3, 3});
-    result->load_to_host();
+    result->load_to_device();
 
     // dense 1
     auto weight1 = new TensorOpenCL<float>(program, queue, context);
@@ -116,13 +116,12 @@ int main(int argc, char** argv)
     model.add_layer(relu1);
     model.add_layer(dense2);
     model.add_layer(argmax1);
-    model.to_host();
+    model.to_device();
     model.execute(input, result);
 
     clFinish(queue);
 
     result->load_to_host();
-    
 
     std::cout << "input: "    << input->to_string(true, true, true, true);
     std::cout << "result: "   << result->to_string(true, true, true, true);
