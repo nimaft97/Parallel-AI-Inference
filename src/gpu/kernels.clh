@@ -1,4 +1,5 @@
 #define GEMM_TILE_DIM 16
+#define MAX_LOCAL_SIZE 16384  // 64KB divided by 4 
 
 __kernel void matSum(__global float* lBuffer, __global float* rBuffer, __global float* resultBuffer,
                      const uint length)
@@ -90,7 +91,7 @@ __kernel void gemm(__global float* lBuffer, __global float* rBuffer, __global fl
                     {
                         // check if indices of the element that's being read are within the range
                         const uint tmp_row = left_buff_row + i;
-                        const tmp_col = left_buff_col + j;
+                        const uint tmp_col = left_buff_col + j;
                         if (tmp_col >= lDim_1 || tmp_row >= lDim_0)
                         {
                             left_tile[i][j] = 0.0f;
@@ -166,5 +167,91 @@ __kernel void matRelu(__global float* inBuffer, __global float* outBuffer,
     for (uint i = thread_idx; i < length; i += global_size)
     {
         outBuffer[i] = max(0.0f, inBuffer[i]);
+    }
+}
+
+__kernel void matArgMax(__global float* inBuffer, __global float* g_argmax,
+                     const uint length /*length has to be power of 2*/)
+{
+    const uint global_size   =    get_global_size(0);
+    const uint local_size    =    get_local_size(0);
+    const uint thread_g_idx  =    get_global_id(0);
+    const uint thread_l_idx  =    get_local_id(0);
+    const uint group_idx     =    get_group_id(0);
+    const uint num_groups    =    get_num_groups(0);
+
+    // initialize g_argmax
+    if (thread_l_idx == 0)
+    {
+        *g_argmax = 0u;
+    }
+
+    // define shared (local) memory
+    const uint local_mem_length = MAX_LOCAL_SIZE / 1024;
+    __local float data[local_mem_length];
+    __local uint data_index[local_mem_length];
+
+    for (uint base_idx = 0u; base_idx < length; base_idx += num_groups * local_mem_length)
+    {
+        
+        // global indices
+        const uint start_idx = group_idx * local_mem_length + base_idx;
+        const uint end_idx   = start_idx + local_mem_length;
+
+        if (start_idx >= length)
+        {
+            return;
+        }
+
+        // load global to local
+        for (uint i = start_idx + thread_l_idx; i < end_idx; i += local_size)
+        {
+            // populate data
+            if (i < length)
+            {
+                data[i - start_idx] = inBuffer[i]; 
+            }
+            else
+            {
+                // write min float for out of range values
+                data[i - start_idx] = -FLT_MAX;
+            }
+
+            // populate data_index
+            data_index[i - start_idx] = i;
+        }
+        barrier(CLK_LOCAL_MEM_FENCE);  // sync
+
+        // up-sweep phase
+        for (uint p = 2; p <= local_mem_length; p *= 2)
+        {
+            for (uint i = thread_l_idx; i < local_mem_length; i += local_size)
+            {
+                if ((i+1) % p == 0)
+                {
+                    if (data[i] < data[i - p/2])
+                    {
+                        data[i]       = data[i - p/2];
+                        data_index[i] = data_index[i - p/2];
+                    }
+                }
+            }
+            barrier(CLK_LOCAL_MEM_FENCE);
+        }
+
+        if (thread_l_idx == 0)
+        {
+            // at this point, the last element of the local arrays
+            // have the max value and its index
+            const float current_g_argmax = *g_argmax;
+            const float current_l_argmax = data_index[local_mem_length - 1];
+            const float current_g_max = inBuffer[(uint)current_g_argmax];
+            const float current_l_max = data[local_mem_length - 1];  // inBuffer[current_l_argmax]
+
+            if (current_l_max > current_g_max) {
+                // atomically update argmax index (not the max value)
+                atomic_xchg((volatile __global float*)g_argmax, current_l_argmax);
+            }
+        }
     }
 }
