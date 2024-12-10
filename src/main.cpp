@@ -28,6 +28,11 @@ int main(int argc, char** argv)
     {
         // at least one OpenCL capable GPU exists
         std::cout << "GPU found" << std::endl;
+        // Query local memory size
+        cl_ulong localMemSize;
+        err = clGetDeviceInfo(device, CL_DEVICE_LOCAL_MEM_SIZE, sizeof(cl_ulong), &localMemSize, nullptr);
+        CHECK_CL_ERROR(err, "Error querying device info.");
+        std::cout << "Maximum local memory size per work group: " << localMemSize / 1024 << " KB" << std::endl;
     }
     else
     {
@@ -49,6 +54,16 @@ int main(int argc, char** argv)
     CHECK_CL_ERROR(err, "Couldn't create the program");
     // build the program
     err = clBuildProgram(program, 1, &device, NULL, NULL, NULL);
+    // ****************** Start of Diagnostic Logs ******************
+    // Query the build log
+    size_t log_size;
+    clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
+    char *log = new char[log_size];
+    clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, log_size, log, NULL);
+    // Print the build log
+    std::cerr << "Build log:\n" << log << std::endl;
+    delete[] log;
+    // ****************** End of Diagnostic Logs ******************
     CHECK_CL_ERROR(err, "Couldn't build the program"); 
 
     auto input = new TensorOpenCL<float>(program, queue, context);
@@ -94,18 +109,19 @@ int main(int argc, char** argv)
     dense2->set_bias(bias2);
 
     auto relu1 = new Activation(ACTIVATION::RELU);
+    auto argmax1 = new Activation(ACTIVATION::ARGMAX);
 
     auto model = Model();
     model.add_layer(dense1);
-    model.add_layer(dense2);
     model.add_layer(relu1);
+    model.add_layer(dense2);
+    model.add_layer(argmax1);
     model.to_device();
     model.execute(input, result);
 
     clFinish(queue);
 
     result->load_to_host();
-    
 
     std::cout << "input: "    << input->to_string(true, true, true, true);
     std::cout << "result: "   << result->to_string(true, true, true, true);

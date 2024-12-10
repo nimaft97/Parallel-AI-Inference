@@ -25,6 +25,9 @@ void Activation::forward(const Tensor<float>* input, Tensor<float>* result1, Ten
         case ACTIVATION::RELU:
             input->relu(result1);
             break;
+        case ACTIVATION::ARGMAX:
+            input->argmax(result1);
+            break;
         default:
             std::cerr <<  __FILE__ << ": "<< __LINE__ << std::endl;
             throw std::invalid_argument("Unhndled Activation type rather than UNKNOWN is encountered.");

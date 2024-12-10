@@ -17,7 +17,8 @@ enum class PLATFORM
 enum class ACTIVATION
 {
     UNKNOWN = 0,
-    RELU
+    RELU,
+    ARGMAX
 };
 
 std::string read_file(const std::string& file_path);
