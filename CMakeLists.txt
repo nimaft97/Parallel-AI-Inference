@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 3.10)
 
 # Use a variable for the project name to avoid repetition
 set(PROJECT_NAME AICompiler)
@@ -26,7 +26,6 @@ set(COMMON_SOURCES
 find_package(OpenCL REQUIRED)
 
 # Optionally find CUDA (for future migration)
-# Optionally find CUDA (for future migration)
 find_package(CUDA)
 
 # Include directories
@@ -43,11 +42,31 @@ target_compile_definitions(model_inference PRIVATE CL_TARGET_OPENCL_VERSION=100)
 add_library(opencl_kernels src/gpu/inference_opencl.cpp)
 target_link_libraries(opencl_kernels OpenCL::OpenCL)
 
-# For PyBind11 Python bindings (once we add it)
-find_package(PythonLibs REQUIRED)
-include_directories(${PYTHON_INCLUDE_DIRS})
-add_library(pybindings MODULE src/bindings/bindings.cpp)
-target_link_libraries(pybindings ${PYTHON_LIBRARIES})
+# For PyBind11 Python bindings
+find_package(Python COMPONENTS Interpreter Development)
+find_package(pybind11 REQUIRED)
+
+
+message(STATUS "Python_FOUND:${Python_FOUND}")
+message(STATUS "Python_VERSION:${Python_VERSION}")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message(STATUS "Python_Development_FOUND:${Python_Development_FOUND}")
+    message(STATUS "Python_LIBRARIES:${Python_LIBRARIES}")
+    message(STATUS "Python_INCLUDE_DIRS: ${Python_INCLUDE_DIRS}")
+    message(STATUS "pybind11_INCLUDE_DIRS: ${pybind11_INCLUDE_DIRS}")
+endif()
+
+# temporary workaround
+# copy python310.lib to the folder tha cmake puts its make files in (e.g., build)
+# to make sure it can find and link python to the project
+# not sure why it cannot read and link the lib file from Python_LIBRARIES
+file(COPY ${Python_LIBRARIES} DESTINATION ${CMAKE_BINARY_DIR})
+message(STATUS "Copying ${Python_LIBRARIES} to ${CMAKE_BINARY_DIR}")
+
+include_directories(${Python_INCLUDE_DIRS} ${pybind11_INCLUDE_DIRS})
+
+add_library(pybindings src/bindings/bindings.cpp)
+target_link_libraries(pybindings ${Python_LIBRARIES} pybind11::module)
 
 # Enable CUDA support in the future
 if(CUDA_FOUND)
