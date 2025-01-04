@@ -14,6 +14,7 @@ By combining these strategies, Parallel AI Inference provides a scalable solutio
 
 ## Prerequisites
 - CMake (version 3.4 or later)
+- C++ (17 or higher)
 - OpenCL SDK (installed and configured)
 - Catch2 (for unit testing)
 
@@ -37,3 +38,12 @@ By combining these strategies, Parallel AI Inference provides a scalable solutio
 
     .\Release\model_inference.exe
     ```
+
+# License
+This project is licensed under the MIT License. See [LICENSE](https://github.com/nimaft97/Parallel-AI-Inference/tree/main?tab=MIT-1-ov-file) for details.
+
+
+# Acknowledgments
+- OpenCL for enabling cross-platform parallel computation.
+- Catch2 for providing a robust unit testing framework.
+- CMake for simplifying the build process.
